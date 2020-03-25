@@ -61,13 +61,13 @@ class Game:
 		if tileType == "gotojail":
 			player.go_to_jail()
 
-		# # Do chance card if player has landed on a chance tile
-		# elif player.position in Board.TILES_CHANCE:
-		# 	player.doChanceCard(self.chancePile.pullCard(), self.board)
-		#
-		# # Do commmunity card if player has landed on a community chest tile
-		# elif player.position in Board.TILES_COMMUNITY:
-		# 	player.doCommunityCard(self.communityPile.pullCard(), self.board)
+		# Do chance card if player has landed on a chance tile
+		elif player.position in Board.TILES_CHANCE:
+			player.doChanceCard(self.chancePile.pullCard(), self.board)
+
+		# Do commmunity card if player has landed on a community chest tile
+		elif player.position in Board.TILES_COMMUNITY:
+			player.doCommunityCard(self.communityPile.pullCard(), self.board)
 
 		elif Board.TILE_BUILDING[player.position] is not None:
 			building = Board.TILE_BUILDING[player.position]

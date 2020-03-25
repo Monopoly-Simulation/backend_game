@@ -32,7 +32,7 @@ class Player:
 		self.consecutiveDoubles = 0
 		self.consecutive_not_Doubles = 0
 		self.at_jail = False
-		self.cash = 0
+		self.cash = 200
 		self.income = 100
 		self.building = []
 		self.land = 0
@@ -171,10 +171,12 @@ class Player:
 	def doChanceCard(self, card, board):
 		# Check the type of the chance card
 		# card for moving
+		log.write("player {0} get a chance card {1}.\n".format(self.num, card))
 		if card.kind == "advance":
 			# Move to next utilities if necessary
 			if card.value == "utility":
 				# Keep track if suitable utilities is found
+				log.write("player {0} goes to the nearest utility.\n")
 				moved = False
 				# Go through possible utilities
 				for pos in board.TILES_UTILITIES:
@@ -191,6 +193,7 @@ class Player:
 			# Move to next railroad if necessary
 			elif card.value == "railroad":
 				# Keep track if suitable railroad is found
+				log.write("player {0} goes to the nearest railroad.\n")
 				moved = False
 				# Go through possible railroad
 				for pos in board.TILES_TRANSPORT:
@@ -207,22 +210,44 @@ class Player:
 			# If negative, thus should move back, do that
 			elif card.value <= 0:
 				self.position, _ = self.getNewPosition(card.value, board)
-
+				log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
 			# Move player to given position otherwise
 			else:
 				self.position = card.value
+				if self.position == board.TILES_JAIL[0]:
+					self.at_jail = True
+				log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
 		# card for get money
 		elif card.kind == "cash":
 			self.cash += card.value
+			log.write("player {0} gets {1} cash, currently has {2} cash.\n".format(self.num, card.value, self.cash))
 
 		# card for tax
 		elif card.kind == "tax":
-			self.cash -= card.value[0] * self.house + card.value[1] * self.hotel
+			fined = card.value[0] * self.house + card.value[1] * self.hotel
+			self.fine_money(fined)
+			log.write("player {0} pay {1} tax, currently has {2} cash.\n".format(self.num, fined, self.cash))
 
 	def doCommunityCard(self, card, board):
 		# Go to given position if card is of the advance kind
+		# Check the type of the chance card
+		# card for moving
+		log.write("player {0} get a community card {1}.\n".format(self.num, card))
 		if card.kind == "advance":
 			self.position = card.value
+			if self.position == board.TILES_JAIL[0]:
+				self.at_jail = True
+			log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
+		# card for get money
+		elif card.kind == "cash":
+			self.cash += card.value
+			log.write("player {0} gets {1} cash, currently has {2} cash.\n".format(self.num, card.value, self.cash))
+
+		# card for tax
+		elif card.kind == "tax":
+			fined = card.value[0] * self.house + card.value[1] * self.hotel
+			self.fine_money(fined)
+			log.write("player {0} pay {1} tax, currently has {2} cash.\n".format(self.num, fined, self.cash))
 
 	def total_property(self):
 		land_value = 0
