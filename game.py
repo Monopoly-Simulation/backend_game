@@ -23,22 +23,28 @@ class Game:
 			if end:
 				break
 			for i in self.players:
-				print("player {0}: cash {1}, debt {2}, property {3}".format(i.num, i.cash, i.debt, i.total_property()))
+				print("player {0}: cash {1}, property {2}".format(i.num, i.cash, i.total_property()))
 
 	def round(self):
 		# Each round, every player should get its turn
 		for player in self.players:
-			if not player.bankrupt():
+			if not player.is_bankrupt():
 				self.turn(player)
-				if player.bankrupt():
-					player.bankrupt_status = True
-					log.write("player {} has bankrupted.\n".format(player.num))
+				if player.is_bankrupt():
+					player.bankrupt()
+					log.write("player {} has bankrupted, return all properties to the bank.\n".format(player.num))
+
 					self.bankrupt_count += 1
 			if len(self.players) - self.bankrupt_count == 1:
 				for i in self.players:
-					if not i.bankrupt():
+					if not i.is_bankrupt():
 						log.write("player {} wins\n".format(i.num))
 				return True
+
+		log.write("\n")
+		for player in self.players:
+			log.write("player {} has {} cash.\n".format(player.num, player.cash))
+		log.write("\n")
 		return False
 
 	def turn(self, player):
@@ -68,7 +74,8 @@ class Game:
 			if building.owner is None or building.owner.num == player.num:
 				player.buy_building(Board.TILE_BUILDING[player.position])
 			elif building.owner is not None and building.owner != player.num:
-				player.fine_money(building)
+				fined = int(building.cur_price * 0.2)
+				player.fine_money(fined, other=building.owner)
 
 		# Log the fact that a player has landed on a tile, after all movements
 		self.board.hit(player.position)

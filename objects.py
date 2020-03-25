@@ -12,12 +12,16 @@ class Building:
 		self.level = 0
 
 	def set_owner(self, player):
+		self.cur_price += self.base_price
 		self.owner = player
 
 	def improve(self):
 		if self.level <= 1:
 			self.cur_price += self.base_price
 			self.level += 1
+
+	def sell(self, other=None):
+		self.owner = other
 
 
 class Player:
@@ -34,8 +38,17 @@ class Player:
 		self.land = 0
 		self.house = 0
 		self.hotel = 0
-		self.debt = 0
 		self.bankrupt_status = False
+
+	def find_min_house_to_sell(self, c):
+		target = None
+		price = float("inf")
+		for building in self.building:
+			print(building.base_price * 0.9 + self.cash, c, building.base_price)
+			if building.base_price * 0.9 + self.cash >= c and building.base_price < price:
+				price = building.base_price
+				target = building
+		return target
 
 	def go_to_jail(self):
 		self.at_jail = True
@@ -60,18 +73,21 @@ class Player:
 		else:
 			if building.owner.num == self.num:
 				if self.cash >= building.base_price:
-					self.cash -= building.base_price
 					if building.level == 0:
+						self.cash -= building.base_price
 						self.land -= 1
 						self.house += 1
+						building.improve()
 						log.write('player {0} upgrades the land on {1} to a house, costs {2}, currently has {3} cash.\n'.format(self.num, building.name, building.base_price, self.cash))
 					elif building.level == 1:
+						self.cash -= building.base_price
 						self.house -= 1
 						self.hotel += 1
+						building.improve()
 						log.write(
 							'player {0} upgrades the house on {1} to a hotel, costs {2}, currently has {3} cash.\n'.format(
 								self.num, building.name, building.base_price, self.cash))
-					building.improve()
+
 				else:
 					return False
 			else:
@@ -79,15 +95,24 @@ class Player:
 
 		return True
 
-	def fine_money(self, building):
-		fined = int(building.cur_price * 0.2)
-		if self.cash >= fined:
-			self.cash -= fined
+	def fine_money(self, fined, other=None):
+		if self.cash < fined:
+			building_to_sell = self.find_min_house_to_sell(fined)
+			# print(self.building)
+			if building_to_sell is not None:
+				building_to_sell.sell()
+				self.building.remove(building_to_sell)
+				sell_price = int(building_to_sell.cur_price * 0.9)
+				self.cash += sell_price
+				log.write("player {0} sells the property on {1} to the bank for {2} cash, currently has {3}.\n".format(self.num, building_to_sell.name, sell_price, self.cash))
+
+		self.cash -= fined
+		if other is not None:
+			other.cash += fined
+			log.write(
+				"player {0} lands on player {1}'s property, player {0} gives {2} to player {1}, now player {0} has {3}, player {1} has {4}.\n".format(self.num, other.num, fined, self.cash, other.cash))
 		else:
-			self.debt += fined
-		building.owner.cash += fined
-		log.write(
-			"player {0} lands on player {1}'s property, player {0} gives {2} to player {1}, now player {0} has {3}, player {1} has {4}.\n".format(self.num, building.owner.num, fined, self.cash, building.owner.cash))
+			log.write("player {0} is fined {1} by the country, currently has {2}.\n".format(self.num, fined, self.cash))
 
 	def move(self, board, dice1, dice2):
 		# Determine whether to go to jail due to double throws
@@ -134,7 +159,7 @@ class Player:
 				self.consecutive_not_Doubles += 1
 
 			if self.consecutive_not_Doubles >= 3:
-				self.cash -= 50
+				self.fine_money(50)
 				self.go_out_of_jail()
 				self.consecutive_not_Doubles = 0
 				log.write("player {0} goes out of jail because of paying 50.\n".format(self.num))
@@ -205,8 +230,14 @@ class Player:
 			land_value += i.cur_price
 		return land_value + self.cash
 
+	def is_bankrupt(self):
+		return self.cash < 0 or self.bankrupt_status
+
 	def bankrupt(self):
-		return self.total_property() < self.debt
+		for building in self.building:
+			building.sell()
+		self.building = []
+		self.bankrupt_status = True
 
 
 class Board:
@@ -353,4 +384,3 @@ class Board:
 				len(Board.TILES_TRANSPORT) + len(Board.TILES_TAX) +
 				len(Board.TILES_NONE) + len(Board.TILES_JAIL) +
 				len(Board.TILES_GO_TO_JAIL) + len(Board.TILES_GO))
-

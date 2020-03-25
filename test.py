@@ -2,7 +2,7 @@
 
 from game import *
 import random
-# random.seed(0)
+random.seed(0)
 
-g = Game([Player(1), Player(2)], 1000)
+g = Game([Player(1), Player(2)], 200)
 g.run()
