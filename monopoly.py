@@ -1,7 +1,6 @@
 #!/usr/bin/python
-
+from util import log
 from game import *
-from player import *
 from results import *
 import sys
 import time

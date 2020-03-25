@@ -1,4 +1,4 @@
-from board import *
+from objects import *
 
 # TODO: count the number of simulations locally
 

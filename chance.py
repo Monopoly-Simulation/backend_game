@@ -21,14 +21,14 @@ class ChancePile:
 		ChanceCard("advance", "utility"),
 		ChanceCard("advance", "railroad"),
 		ChanceCard("cash", 50),
-		ChanceCard("escapejail", None),
+		# ChanceCard("escapejail", None),
 		ChanceCard("advance", -3),
 		ChanceCard("advance", 11),
 		ChanceCard("tax", [-25, -100]), # 25 for house, 100 for hotel
 		ChanceCard("cash", -15),
 		ChanceCard("advance", 5),
 		ChanceCard("advance", 40),
-		ChanceCard("pay", 50), # pay each player 50
+		# ChanceCard("pay", 50), # pay each player 50
 		ChanceCard("cash", 150),
 		ChanceCard("cash", 100),
 	]

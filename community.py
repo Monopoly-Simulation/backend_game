@@ -19,12 +19,12 @@ class CommunityPile:
 		CommunityCard("cash", 200),
 		CommunityCard("cash", -50),
 		CommunityCard("cash", 50),
-		CommunityCard("escapejail", None),
+		# CommunityCard("escapejail", None),
 		CommunityCard("advance", 11),
-		CommunityCard("receive", 50), # from every player
+		# CommunityCard("receive", 50), # from every player
 		CommunityCard("cash", 100),
 		CommunityCard("cash", 20),
-		CommunityCard("receive", 10), # from every player
+		# CommunityCard("receive", 10), # from every player
 		CommunityCard("cash", 100),
 		CommunityCard("cash", -100),
 		CommunityCard("cash", -150),
