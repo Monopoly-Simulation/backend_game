@@ -1,5 +1,5 @@
 from util import log
-
+import random
 
 class Building:
 
@@ -26,8 +26,8 @@ class Building:
 
 class Player:
 
-	def __init__(self, num):
-		self.num = num
+	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy):
+		self.num = num  # player id
 		self.position = 0
 		self.consecutiveDoubles = 0
 		self.consecutive_not_Doubles = 0
@@ -39,13 +39,23 @@ class Player:
 		self.house = 0
 		self.hotel = 0
 		self.bankrupt_status = False
+		self.b_strategy = buying_strategy
+		self.u_strategy = upgrading_strategy
+		self.t_strategy = trading_strategy
 
 	def find_min_house_to_sell(self, c):
 		target = None
 		price = float("inf")
+		if self.t_strategy == 0:
+			decision = random.randint(0, 1)  # either buy or not buy
+		elif self.t_strategy == 1:
+			decision = 0.5
+		elif self.t_strategy == 2:
+			constant = 500
 		for building in self.building:
 			print(building.base_price * 0.9 + self.cash, c, building.base_price)
-			if building.base_price * 0.9 + self.cash >= c and building.base_price < price:
+			if (self.t_strategy !=2 and building.base_price * decision + self.cash >= c and building.base_price < price) or\
+					(self.t_strategy == 2 and self.cash >= constant and building.base_price < price):
 				price = building.base_price
 				target = building
 		return target
@@ -61,8 +71,16 @@ class Player:
 	def buy_building(self, building):
 		assert isinstance(building, Building)
 
-		if building.owner is None:
-			if self.cash >= building.base_price:
+		if building.owner is None:  # the player can buy the building
+			# based on the player's strategy, decide how much cash could be used to buy buildings
+			if self.b_strategy == 0:
+				decision = random.randint(0, 1) # either buy or not buy
+			elif self.b_strategy == 1:
+				decision = 0.5
+			elif self.b_strategy == 2:
+				constant = 500
+			if (self.b_strategy != 2 and self.cash * decision >= building.base_price) or\
+					(self.b_strategy == 2 and self.cash >= constant and self.cash >= building.base_price):
 				self.cash -= building.base_price
 				self.building.append(building)
 				building.set_owner(self)
@@ -71,8 +89,21 @@ class Player:
 			else:
 				return False
 		else:
-			if building.owner.num == self.num:
-				if self.cash >= building.base_price:
+			if self.u_strategy == 0:
+				decision = random.randint(0, 1) # either buy or not buy
+			elif self.u_strategy == 1:
+				decision = 0.5
+			elif self.u_strategy == 2:
+				constant = 500
+			if building.owner.num == self.num:  # the player is the owner of the building
+				if self.u_strategy == 0:
+					decision = random.randint(0, 1)  # either build or not build
+				elif self.u_strategy == 1:
+					decision = 0.5
+				elif self.u_strategy == 2:
+					constant = 500   # pre-set
+				if (self.u_strategy != 2 and self.cash * decision >= building.base_price) or \
+						(self.u_strategy == 2 and self.cash >= constant and self.cash >= building.base_price):
 					if building.level == 0:
 						self.cash -= building.base_price
 						self.land -= 1
@@ -409,3 +440,4 @@ class Board:
 				len(Board.TILES_TRANSPORT) + len(Board.TILES_TAX) +
 				len(Board.TILES_NONE) + len(Board.TILES_JAIL) +
 				len(Board.TILES_GO_TO_JAIL) + len(Board.TILES_GO))
+

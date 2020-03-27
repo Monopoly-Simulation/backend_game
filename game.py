@@ -3,7 +3,6 @@ from objects import *
 from chance import *
 from community import *
 
-
 class Game:
 
 	def __init__(self, players, rounds):

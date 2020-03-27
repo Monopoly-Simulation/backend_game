@@ -19,7 +19,7 @@ def runSimulation(args):
 	# Go through set amount of simulations
 	for i in range(0, args.number):
 		# Start a new game, run it and save the results
-		g = Game([Player(i) for i in range(args.players)], args.rounds)
+		g = Game([Player(i, args.buying_strategy, args.upgrading_strategy, args.trading_strategy) for i in range(args.players)], args.rounds)
 		g.run()
 		r.addHitResults(g.board.hits)
 
@@ -50,6 +50,12 @@ if __name__ == "__main__":
 		default=1, help="number of players to run the simulation with")
 	parser.add_argument("-r", "--rounds", type=positiveInt, default=100,
 		help="number of rounds to simulate each game")
+	parser.add_argument("-b", "--buying_strategy", type=int, default=0,
+						help="the strategy that players use to buy buildings")
+	parser.add_argument("-u", "--upgrading_strategy", type=int, default=0,
+						help="the strategy that players use to build buildings")
+	parser.add_argument("-t", "--trading_strategy", type=int, default=0,
+						help="the strategy that players use to trade")
 	args = parser.parse_args()
 
 	# Run simulation
