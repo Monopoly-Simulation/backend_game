@@ -104,7 +104,7 @@ class Player:
 					decision = 0.5
 				elif self.u_strategy == 2:
 					constant = 500   # pre-set
-				if (self.u_strategy != 2 and (property + self.cash) * decision >= building.base_price and seld.cash >= building.base_price) or \
+				if (self.u_strategy != 2 and (property + self.cash) * decision >= building.base_price and self.cash >= building.base_price) or \
 						(self.u_strategy == 2 and self.cash >= constant and self.cash >= building.base_price):
 					if building.level == 0:
 						self.cash -= building.base_price
