@@ -52,10 +52,11 @@ class Player:
 			decision = 0.5
 		elif self.t_strategy == 2:
 			constant = 500
+		property = sum(building.base_price for building in self.building)
 		for building in self.building:
 			print(building.base_price * 0.9 + self.cash, c, building.base_price)
-			if (self.t_strategy !=2 and building.base_price * decision + self.cash >= c and building.base_price < price) or\
-					(self.t_strategy == 2 and self.cash >= constant and building.base_price < price):
+			if (self.t_strategy != 2 and (property + self.cash) * decision >= c and building.base_price >= c) or\
+					(self.t_strategy == 2 and self.cash >= constant and building.base_price >= c):
 				price = building.base_price
 				target = building
 		return target
@@ -70,6 +71,7 @@ class Player:
 
 	def buy_building(self, building):
 		assert isinstance(building, Building)
+		property = sum(b.base_price for b in self.building)
 
 		if building.owner is None:  # the player can buy the building
 			# based on the player's strategy, decide how much cash could be used to buy buildings
@@ -79,7 +81,7 @@ class Player:
 				decision = 0.5
 			elif self.b_strategy == 2:
 				constant = 500
-			if (self.b_strategy != 2 and self.cash * decision >= building.base_price) or\
+			if (self.b_strategy != 2 and (self.cash + property) * decision >= building.base_price and self.cash >= building.base_price) or\
 					(self.b_strategy == 2 and self.cash >= constant and self.cash >= building.base_price):
 				self.cash -= building.base_price
 				self.building.append(building)
@@ -102,7 +104,7 @@ class Player:
 					decision = 0.5
 				elif self.u_strategy == 2:
 					constant = 500   # pre-set
-				if (self.u_strategy != 2 and self.cash * decision >= building.base_price) or \
+				if (self.u_strategy != 2 and (property + self.cash) * decision >= building.base_price and seld.cash >= building.base_price) or \
 						(self.u_strategy == 2 and self.cash >= constant and self.cash >= building.base_price):
 					if building.level == 0:
 						self.cash -= building.base_price
