@@ -1,5 +1,6 @@
 from util import log
 import random
+import numpy as np
 
 class Building:
 
@@ -26,7 +27,8 @@ class Building:
 
 class Player:
 
-	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy):
+	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy,
+				 buying_para, upgrading_para, trading_para):
 		self.num = num  # player id
 		self.position = 0
 		self.consecutiveDoubles = 0
@@ -42,6 +44,21 @@ class Player:
 		self.b_strategy = buying_strategy
 		self.u_strategy = upgrading_strategy
 		self.t_strategy = trading_strategy
+		self.b_para = buying_para
+		self.u_para = upgrading_para
+		self.t_para = trading_para
+		# if self.b_strategy == 1:
+		# 	self.b_para = np.arange(buying_range[0], buying_range[1], buying_range[2])
+		# if self.b_strategy == 2:
+		# 	self.b_para = buying_constant
+		# if self.u_strategy == 1:
+		# 	self.u_para = np.arange(upgrading_range[0], upgrading_range[1], upgrading_range[2])
+		# if self.u_strategy == 2:
+		# 	self.u_para = upgrading_constant
+		# if self.t_strategy == 1:
+		# 	self.t_para = np.arange(trading_range[0], trading_range[1], trading_range[2])
+		# if self.t_strategy == 2:
+		# 	self.t_para = trading_constant
 
 	def find_min_house_to_sell(self, c):
 		target = None
@@ -49,14 +66,17 @@ class Player:
 		if self.t_strategy == 0:
 			decision = random.randint(0, 1)  # either buy or not buy
 		elif self.t_strategy == 1:
-			decision = 0.5
+			decision = self.t_para
 		elif self.t_strategy == 2:
-			constant = 500
+			constant = self.t_para
 		property = sum(building.base_price for building in self.building)
 		for building in self.building:
-			print(building.base_price * 0.9 + self.cash, c, building.base_price)
-			if (self.t_strategy != 2 and (property + self.cash) * decision >= c and building.base_price >= c) or\
-					(self.t_strategy == 2 and self.cash >= constant and building.base_price >= c):
+			# print(building.base_price * 0.9 + self.cash, c, building.base_price)
+			if self.t_strategy != 2:
+				if (property + self.cash) * decision >= c and building.base_price >= c:
+					price = building.base_price
+					target = building
+			elif self.t_strategy == 2 and self.cash >= constant and building.base_price >= c:
 				price = building.base_price
 				target = building
 		return target
@@ -76,11 +96,11 @@ class Player:
 		if building.owner is None:  # the player can buy the building
 			# based on the player's strategy, decide how much cash could be used to buy buildings
 			if self.b_strategy == 0:
-				decision = random.randint(0, 1) # either buy or not buy
+				decision = random.randint(0, 1)  # either buy or not buy
 			elif self.b_strategy == 1:
-				decision = 0.5
+				decision = self.b_para
 			elif self.b_strategy == 2:
-				constant = 500
+				constant = self.b_para
 			if (self.b_strategy != 2 and (self.cash + property) * decision >= building.base_price and self.cash >= building.base_price) or\
 					(self.b_strategy == 2 and self.cash >= constant and self.cash >= building.base_price):
 				self.cash -= building.base_price
@@ -92,11 +112,11 @@ class Player:
 				return False
 		else:
 			if self.u_strategy == 0:
-				decision = random.randint(0, 1) # either buy or not buy
+				decision = random.randint(0, 1)  # either buy or not buy
 			elif self.u_strategy == 1:
-				decision = 0.5
+				decision = self.u_para
 			elif self.u_strategy == 2:
-				constant = 500
+				constant = self.u_para
 			if building.owner.num == self.num:  # the player is the owner of the building
 				if self.u_strategy == 0:
 					decision = random.randint(0, 1)  # either build or not build
