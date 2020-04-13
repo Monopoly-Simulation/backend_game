@@ -29,7 +29,7 @@ class CommunityPile:
 		CommunityCard("cash", -100),
 		CommunityCard("cash", -150),
 		CommunityCard("cash", 25),
-		CommunityCard("tax", [-40, -115]), # for each [house, hotel]
+		CommunityCard("tax", [10, 20]), # for each [house, hotel]
 		CommunityCard("cash", 10),
 		CommunityCard("cash", 100)
 	]
