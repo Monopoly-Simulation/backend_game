@@ -3,6 +3,7 @@ from objects import *
 from chance import *
 from community import *
 
+
 class Game:
 
 	def __init__(self, players, rounds):
@@ -16,13 +17,15 @@ class Game:
 	def run(self):
 		# Play the game for a given amount of rounds
 		for i in range(0, self.rounds):
+			print("round", i)
+
 			log.write("round {0}:\n".format(i))
 			end = self.round()
 			log.write("\n")
 			if end:
 				break
-			for i in self.players:
-				print("player {0}: cash {1}, property {2}".format(i.num, i.cash, i.total_property()))
+			for player in self.players:
+				print("player {0}: cash {1}, property {2}".format(player.num, player.cash, player.total_property()))
 
 	def round(self):
 		# Each round, every player should get its turn
@@ -32,7 +35,6 @@ class Game:
 				if player.is_bankrupt():
 					player.bankrupt()
 					log.write("player {} has bankrupted, return all properties to the bank.\n".format(player.num))
-
 					self.bankrupt_count += 1
 			if len(self.players) - self.bankrupt_count == 1:
 				for i in self.players:
@@ -75,6 +77,20 @@ class Game:
 			elif building.owner is not None and building.owner != player.num:
 				fined = int(building.cur_price * 0.2)
 				player.fine_money(fined, other=building.owner)
+
+		# equivalent to trading
+		for building_to_sell in player.building_to_sell_list:
+			for other_player in self.players:
+				if not other_player.is_bankrupt():
+					boundary = other_player.choose_boundary(other_player.t_strategy)
+					if other_player != player and other_player.cash - building_to_sell.cur_price >= boundary:
+						other_player.cash -= building_to_sell.cur_price
+						building_to_sell.set_owner(other_player)
+						other_player.building.append(building_to_sell)
+						player.cash += int(building_to_sell.cur_price * 0.1)
+						log.write("player {0} successfully sell land {1} to player {2}, get the remaining {3}, player {0} currently has {4}, player {1} has {5}.".format(player.num, building_to_sell.name, other_player.num, building_to_sell.cur_price * 0.1, player.cash, other_player.cash))
+						break
+		player.building_to_sell_list = []
 
 		# Log the fact that a player has landed on a tile, after all movements
 		self.board.hit(player.position)

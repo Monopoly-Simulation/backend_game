@@ -2,18 +2,18 @@ from util import log
 import random
 import numpy as np
 
+
 class Building:
 
 	def __init__(self, name, price):
 		self.name = name
 		self.owner = None
 		self.base_price = price
-		self.cur_price = 0
+		self.cur_price = price
 		# level 0 means pure land, level 1 means house, level 2 means hotel
 		self.level = 0
 
 	def set_owner(self, player):
-		self.cur_price += self.base_price
 		self.owner = player
 
 	def improve(self):
@@ -23,6 +23,12 @@ class Building:
 
 	def sell(self, other=None):
 		self.owner = other
+
+	def __str__(self):
+		if self.owner is None:
+			return self.name
+		else:
+			return str((self.name, self.owner.num, self.base_price, self.cur_price))
 
 
 class Player:
@@ -44,39 +50,29 @@ class Player:
 		self.b_strategy = buying_strategy
 		self.u_strategy = upgrading_strategy
 		self.t_strategy = trading_strategy
-		self.b_para = buying_para
+    self.b_para = buying_para
 		self.u_para = upgrading_para
 		self.t_para = trading_para
-		# if self.b_strategy == 1:
-		# 	self.b_para = np.arange(buying_range[0], buying_range[1], buying_range[2])
-		# if self.b_strategy == 2:
-		# 	self.b_para = buying_constant
-		# if self.u_strategy == 1:
-		# 	self.u_para = np.arange(upgrading_range[0], upgrading_range[1], upgrading_range[2])
-		# if self.u_strategy == 2:
-		# 	self.u_para = upgrading_constant
-		# if self.t_strategy == 1:
-		# 	self.t_para = np.arange(trading_range[0], trading_range[1], trading_range[2])
-		# if self.t_strategy == 2:
-		# 	self.t_para = trading_constant
+
+		self.building_to_sell_list = []
+
+	def choose_boundary(self, strategy, para):
+		if strategy == 0:
+			boundary = self.total_property() * random.randint(0, 1)
+		elif strategy == 1:
+			boundary = para * self.total_property()
+		elif strategy == 2:
+			boundary = para
+		else:
+			raise Exception("unknown strategy")
+		return boundary
 
 	def find_min_house_to_sell(self, c):
 		target = None
 		price = float("inf")
-		if self.t_strategy == 0:
-			decision = random.randint(0, 1)  # either buy or not buy
-		elif self.t_strategy == 1:
-			decision = self.t_para
-		elif self.t_strategy == 2:
-			constant = self.t_para
-		property = sum(building.base_price for building in self.building)
 		for building in self.building:
 			# print(building.base_price * 0.9 + self.cash, c, building.base_price)
-			if self.t_strategy != 2:
-				if (property + self.cash) * decision >= c and building.base_price >= c:
-					price = building.base_price
-					target = building
-			elif self.t_strategy == 2 and self.cash >= constant and building.base_price >= c:
+			if building.cur_price * 0.9 + self.cash > c and building.cur_price < price:
 				price = building.base_price
 				target = building
 		return target
@@ -95,14 +91,8 @@ class Player:
 
 		if building.owner is None:  # the player can buy the building
 			# based on the player's strategy, decide how much cash could be used to buy buildings
-			if self.b_strategy == 0:
-				decision = random.randint(0, 1)  # either buy or not buy
-			elif self.b_strategy == 1:
-				decision = self.b_para
-			elif self.b_strategy == 2:
-				constant = self.b_para
-			if (self.b_strategy != 2 and (self.cash + property) * decision >= building.base_price and self.cash >= building.base_price) or\
-					(self.b_strategy == 2 and self.cash >= constant and self.cash >= building.base_price):
+			boundary = self.choose_boundary(self.b_strategy, self.b_para)
+			if self.cash - building.base_price >= boundary:
 				self.cash -= building.base_price
 				self.building.append(building)
 				building.set_owner(self)
@@ -111,21 +101,9 @@ class Player:
 			else:
 				return False
 		else:
-			if self.u_strategy == 0:
-				decision = random.randint(0, 1)  # either buy or not buy
-			elif self.u_strategy == 1:
-				decision = self.u_para
-			elif self.u_strategy == 2:
-				constant = self.u_para
 			if building.owner.num == self.num:  # the player is the owner of the building
-				if self.u_strategy == 0:
-					decision = random.randint(0, 1)  # either build or not build
-				elif self.u_strategy == 1:
-					decision = 0.5
-				elif self.u_strategy == 2:
-					constant = 500   # pre-set
-				if (self.u_strategy != 2 and (property + self.cash) * decision >= building.base_price and self.cash >= building.base_price) or \
-						(self.u_strategy == 2 and self.cash >= constant and self.cash >= building.base_price):
+				boundary = self.choose_boundary(self.u_strategy, self.u_para)
+				if self.cash - building.base_price >= boundary:
 					if building.level == 0:
 						self.cash -= building.base_price
 						self.land -= 1
@@ -149,14 +127,17 @@ class Player:
 		return True
 
 	def fine_money(self, fined, other=None):
-		if self.cash < fined:
+		boundary = self.choose_boundary(self.t_strategy, self.t_para)
+		if self.cash - fined < boundary:
 			building_to_sell = self.find_min_house_to_sell(fined)
 			# print(self.building)
 			if building_to_sell is not None:
 				building_to_sell.sell()
+				print("here", building_to_sell)
 				self.building.remove(building_to_sell)
 				sell_price = int(building_to_sell.cur_price * 0.9)
 				self.cash += sell_price
+				self.building_to_sell_list.append(building_to_sell)
 				log.write("player {0} sells the property on {1} to the bank for {2} cash, currently has {3}.\n".format(self.num, building_to_sell.name, sell_price, self.cash))
 
 		self.cash -= fined
@@ -229,7 +210,7 @@ class Player:
 			# Move to next utilities if necessary
 			if card.value == "utility":
 				# Keep track if suitable utilities is found
-				log.write("player {0} goes to the nearest utility.\n")
+				log.write("player {0} goes to the nearest utility.\n".format(self.num))
 				moved = False
 				# Go through possible utilities
 				for pos in board.TILES_UTILITIES:
@@ -246,7 +227,7 @@ class Player:
 			# Move to next railroad if necessary
 			elif card.value == "railroad":
 				# Keep track if suitable railroad is found
-				log.write("player {0} goes to the nearest railroad.\n")
+				log.write("player {0} goes to the nearest railroad.\n".format(self.num))
 				moved = False
 				# Go through possible railroad
 				for pos in board.TILES_TRANSPORT:
@@ -272,7 +253,10 @@ class Player:
 				log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
 		# card for get money
 		elif card.kind == "cash":
-			self.cash += card.value
+			if self.cash >= 0:
+				self.cash += card.value
+			else:
+				self.fine_money(-self.cash)
 			log.write("player {0} gets {1} cash, currently has {2} cash.\n".format(self.num, card.value, self.cash))
 
 		# card for tax
