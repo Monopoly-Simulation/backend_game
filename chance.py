@@ -21,7 +21,7 @@ class ChancePile:
 		ChanceCard("advance", "utility"),
 		ChanceCard("advance", "railroad"),
 		ChanceCard("cash", 50),
-		# ChanceCard("escapejail", None),
+		# ChanceCard("escapejail", None)
 		ChanceCard("advance", -3),
 		ChanceCard("advance", 11),
 		ChanceCard("tax", [5, 10]), # 25 for house, 100 for hotel
