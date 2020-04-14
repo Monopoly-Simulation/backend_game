@@ -13,6 +13,9 @@ class Building:
 		# level 0 means pure land, level 1 means house, level 2 means hotel
 		self.level = 0
 
+	def reset(self):
+		self.__init__(self.name, self.base_price)
+
 	def set_owner(self, player):
 		self.owner = player
 
@@ -33,8 +36,7 @@ class Building:
 
 class Player:
 
-	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy,
-				 buying_para, upgrading_para, trading_para):
+	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy, buying_para, upgrading_para, trading_para):
 		self.num = num  # player id
 		self.position = 0
 		self.consecutiveDoubles = 0
@@ -50,18 +52,31 @@ class Player:
 		self.b_strategy = buying_strategy
 		self.u_strategy = upgrading_strategy
 		self.t_strategy = trading_strategy
-    self.b_para = buying_para
+		self.b_para = buying_para
 		self.u_para = upgrading_para
 		self.t_para = trading_para
 
 		self.building_to_sell_list = []
 
+	def reset(self):
+		self.__init__(self.num, self.b_strategy, self.u_strategy, self.t_strategy, self.b_para, self.u_para, self.t_para)
+
+	def __str__(self):
+		s = "buy s:{}, buy para:{}, upgrade s:{}, upgrade para:{}, trade s:{}, trade para:{}.".format(self.b_strategy, self.b_para, self.u_strategy, self.u_para, self.t_strategy, self.t_para)
+		return s
+
+	def __repr__(self):
+		s = "buy s:{}, buy para:{}, upgrade s:{}, upgrade para:{}, trade s:{}, trade para:{}.".format(self.b_strategy, self.b_para, self.u_strategy, self.u_para, self.t_strategy, self.t_para)
+		return s
+
 	def choose_boundary(self, strategy, para):
 		if strategy == 0:
 			boundary = self.total_property() * random.randint(0, 1)
 		elif strategy == 1:
+			assert 0 <= para <= 1
 			boundary = para * self.total_property()
 		elif strategy == 2:
+			# assert para >= 0
 			boundary = para
 		else:
 			raise Exception("unknown strategy")
@@ -87,7 +102,6 @@ class Player:
 
 	def buy_building(self, building):
 		assert isinstance(building, Building)
-		property = sum(b.base_price for b in self.building)
 
 		if building.owner is None:  # the player can buy the building
 			# based on the player's strategy, decide how much cash could be used to buy buildings
@@ -133,7 +147,7 @@ class Player:
 			# print(self.building)
 			if building_to_sell is not None:
 				building_to_sell.sell()
-				print("here", building_to_sell)
+				# print("here", building_to_sell)
 				self.building.remove(building_to_sell)
 				sell_price = int(building_to_sell.cur_price * 0.9)
 				self.cash += sell_price
@@ -173,11 +187,7 @@ class Player:
 			if pass_go:
 				self.cash += self.income
 				log.write("player {0} gains {1} because of passing Go, currently has {2} cash.\n".format(self.num, self.income, self.cash))
-			# Add one to position, if went past jail ？？？
-			# if (newPosition >= Board.TILES_JAIL[0] and newPosition < 35) and (
-			# 		self.position < Board.TILES_JAIL[0] or self.position > 35):
-			# 	newPosition += 1
-			#
+
 			if newPosition >= board.TILES_JAIL[0] > self.position:
 				newPosition += 1
 			# Apply new position
@@ -405,6 +415,9 @@ class Board:
 
 	def __init__(self):
 		# Check if total amount of tiles is correct
+		for b in self.TILE_BUILDING:
+			if b is not None:
+				b.reset()
 		tilesCount = self.getSize()
 		if tilesCount != 41:
 			print("Game board consists of %i tiles, instead of 41!" % tilesCount)

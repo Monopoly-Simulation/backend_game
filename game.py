@@ -1,7 +1,7 @@
-from util import *
-from objects import *
-from chance import *
-from community import *
+from util import log, diceThrow
+from objects import Board
+from chance import ChancePile
+from community import CommunityPile
 
 
 class Game:
@@ -82,7 +82,7 @@ class Game:
 		for building_to_sell in player.building_to_sell_list:
 			for other_player in self.players:
 				if not other_player.is_bankrupt():
-					boundary = other_player.choose_boundary(other_player.t_strategy)
+					boundary = other_player.choose_boundary(other_player.t_strategy, other_player.t_para)
 					if other_player != player and other_player.cash - building_to_sell.cur_price >= boundary:
 						other_player.cash -= building_to_sell.cur_price
 						building_to_sell.set_owner(other_player)
