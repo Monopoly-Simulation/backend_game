@@ -1,6 +1,6 @@
 from util import log
+import util
 import random
-import numpy as np
 
 
 class Building:
@@ -12,6 +12,9 @@ class Building:
 		self.cur_price = price
 		# level 0 means pure land, level 1 means house, level 2 means hotel
 		self.level = 0
+
+	def reset(self):
+		self.__init__(self.name, self.base_price)
 
 	def set_owner(self, player):
 		self.owner = player
@@ -33,35 +36,58 @@ class Building:
 
 class Player:
 
-	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy,
-				 buying_para, upgrading_para, trading_para):
+	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy, buying_para, upgrading_para, trading_para, tax=0, income=200, cash=100):
 		self.num = num  # player id
 		self.position = 0
 		self.consecutiveDoubles = 0
 		self.consecutive_not_Doubles = 0
 		self.at_jail = False
-		self.cash = 200
-		self.income = 100
+
+		self.cash = cash
+		self.income = income
+		self.tax = tax
+
 		self.building = []
+
 		self.land = 0
 		self.house = 0
 		self.hotel = 0
+
 		self.bankrupt_status = False
+
 		self.b_strategy = buying_strategy
 		self.u_strategy = upgrading_strategy
 		self.t_strategy = trading_strategy
-    self.b_para = buying_para
+		self.b_para = buying_para
 		self.u_para = upgrading_para
 		self.t_para = trading_para
 
 		self.building_to_sell_list = []
 
+	def pay_tax(self):
+		money_to_pay = self.tax * self.cash if 0 < self.tax < 1 else self.tax
+		self.cash -= money_to_pay
+		return money_to_pay
+
+	def reset(self):
+		self.__init__(self.num, self.b_strategy, self.u_strategy, self.t_strategy, self.b_para, self.u_para, self.t_para)
+
+	def __str__(self):
+		s = "buy s:{}, buy para:{}, upgrade s:{}, upgrade para:{}, trade s:{}, trade para:{}.".format(self.b_strategy, self.b_para, self.u_strategy, self.u_para, self.t_strategy, self.t_para)
+		return s
+
+	def __repr__(self):
+		s = "buy s:{}, buy para:{}, upgrade s:{}, upgrade para:{}, trade s:{}, trade para:{}.".format(self.b_strategy, self.b_para, self.u_strategy, self.u_para, self.t_strategy, self.t_para)
+		return s
+
 	def choose_boundary(self, strategy, para):
 		if strategy == 0:
 			boundary = self.total_property() * random.randint(0, 1)
 		elif strategy == 1:
+			assert 0 <= para <= 1
 			boundary = para * self.total_property()
 		elif strategy == 2:
+			# assert para >= 0
 			boundary = para
 		else:
 			raise Exception("unknown strategy")
@@ -87,7 +113,6 @@ class Player:
 
 	def buy_building(self, building):
 		assert isinstance(building, Building)
-		property = sum(b.base_price for b in self.building)
 
 		if building.owner is None:  # the player can buy the building
 			# based on the player's strategy, decide how much cash could be used to buy buildings
@@ -97,7 +122,8 @@ class Player:
 				self.building.append(building)
 				building.set_owner(self)
 				self.land += 1
-				log.write("player {0} buys a land on {1}, costs {2}, currently has {3} cash.\n".format(self.num, building.name, building.base_price, self.cash))
+				if util.verbose:
+					log.write("player {0} buys a land on {1}, costs {2}, currently has {3} cash.\n".format(self.num, building.name, building.base_price, self.cash))
 			else:
 				return False
 		else:
@@ -109,15 +135,17 @@ class Player:
 						self.land -= 1
 						self.house += 1
 						building.improve()
-						log.write('player {0} upgrades the land on {1} to a house, costs {2}, currently has {3} cash.\n'.format(self.num, building.name, building.base_price, self.cash))
+						if util.verbose:
+							log.write('player {0} upgrades the land on {1} to a house, costs {2}, currently has {3} cash.\n'.format(self.num, building.name, building.base_price, self.cash))
 					elif building.level == 1:
 						self.cash -= building.base_price
 						self.house -= 1
 						self.hotel += 1
 						building.improve()
-						log.write(
-							'player {0} upgrades the house on {1} to a hotel, costs {2}, currently has {3} cash.\n'.format(
-								self.num, building.name, building.base_price, self.cash))
+						if util.verbose:
+							log.write(
+								'player {0} upgrades the house on {1} to a hotel, costs {2}, currently has {3} cash.\n'.format(
+									self.num, building.name, building.base_price, self.cash))
 
 				else:
 					return False
@@ -133,20 +161,23 @@ class Player:
 			# print(self.building)
 			if building_to_sell is not None:
 				building_to_sell.sell()
-				print("here", building_to_sell)
+				# print("here", building_to_sell)
 				self.building.remove(building_to_sell)
 				sell_price = int(building_to_sell.cur_price * 0.9)
 				self.cash += sell_price
 				self.building_to_sell_list.append(building_to_sell)
-				log.write("player {0} sells the property on {1} to the bank for {2} cash, currently has {3}.\n".format(self.num, building_to_sell.name, sell_price, self.cash))
+				if util.verbose:
+					log.write("player {0} sells the property on {1} to the bank for {2} cash, currently has {3}.\n".format(self.num, building_to_sell.name, sell_price, self.cash))
 
 		self.cash -= fined
 		if other is not None:
 			other.cash += fined
-			log.write(
-				"player {0} lands on player {1}'s property, player {0} gives {2} to player {1}, now player {0} has {3}, player {1} has {4}.\n".format(self.num, other.num, fined, self.cash, other.cash))
+			if util.verbose:
+				log.write(
+					"player {0} lands on player {1}'s property, player {0} gives {2} to player {1}, now player {0} has {3}, player {1} has {4}.\n".format(self.num, other.num, fined, self.cash, other.cash))
 		else:
-			log.write("player {0} is fined {1} by the country, currently has {2}.\n".format(self.num, fined, self.cash))
+			if util.verbose:
+				log.write("player {0} is fined {1} by the country, currently has {2}.\n".format(self.num, fined, self.cash))
 
 	def move(self, board, dice1, dice2):
 		# Determine whether to go to jail due to double throws
@@ -160,7 +191,8 @@ class Player:
 					self.go_to_jail()
 					# Reset consecutive throws
 					self.consecutiveDoubles = 0
-					log.write("player {0} goes to jail because of 3 consecutive doubles.\n".format(self.num))
+					if util.verbose:
+						log.write("player {0} goes to jail because of 3 consecutive doubles.\n".format(self.num))
 					return
 			else:
 				# Reset consecutive doubles every time different numbers are roled
@@ -171,23 +203,24 @@ class Player:
 
 			# gain money when pass Go
 			if pass_go:
+				tax = self.pay_tax()
 				self.cash += self.income
-				log.write("player {0} gains {1} because of passing Go, currently has {2} cash.\n".format(self.num, self.income, self.cash))
-			# Add one to position, if went past jail ？？？
-			# if (newPosition >= Board.TILES_JAIL[0] and newPosition < 35) and (
-			# 		self.position < Board.TILES_JAIL[0] or self.position > 35):
-			# 	newPosition += 1
-			#
+				if util.verbose:
+					log.write("player {0} pays {1} tax and gains {2} because of passing Go, currently has {3} cash.\n".format(self.num, tax, self.income, self.cash))
+
 			if newPosition >= board.TILES_JAIL[0] > self.position:
 				newPosition += 1
 			# Apply new position
 			self.position = newPosition
-			log.write("player {0} move to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
+			if util.verbose:
+				log.write("player {0} move to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
 		else:
-			log.write("player {0} is in jail.\n".format(self.num))
+			if util.verbose:
+				log.write("player {0} is in jail.\n".format(self.num))
 			if dice1 == dice2:
 				self.go_out_of_jail()
-				log.write("player {0} goes out of jail because of a double.\n".format(self.num))
+				if util.verbose:
+					log.write("player {0} goes out of jail because of a double.\n".format(self.num))
 				return
 			else:
 				self.consecutive_not_Doubles += 1
@@ -196,7 +229,8 @@ class Player:
 				self.fine_money(50)
 				self.go_out_of_jail()
 				self.consecutive_not_Doubles = 0
-				log.write("player {0} goes out of jail because of paying 50.\n".format(self.num))
+				if util.verbose:
+					log.write("player {0} goes out of jail because of paying 50.\n".format(self.num))
 
 	def getNewPosition(self, offset, board):
 		tmp = self.position + offset
@@ -205,12 +239,14 @@ class Player:
 	def doChanceCard(self, card, board):
 		# Check the type of the chance card
 		# card for moving
-		log.write("player {0} get a chance card {1}.\n".format(self.num, card))
+		if util.verbose:
+			log.write("player {0} get a chance card {1}.\n".format(self.num, card))
 		if card.kind == "advance":
 			# Move to next utilities if necessary
 			if card.value == "utility":
 				# Keep track if suitable utilities is found
-				log.write("player {0} goes to the nearest utility.\n".format(self.num))
+				if util.verbose:
+					log.write("player {0} goes to the nearest utility.\n".format(self.num))
 				moved = False
 				# Go through possible utilities
 				for pos in board.TILES_UTILITIES:
@@ -227,7 +263,8 @@ class Player:
 			# Move to next railroad if necessary
 			elif card.value == "railroad":
 				# Keep track if suitable railroad is found
-				log.write("player {0} goes to the nearest railroad.\n".format(self.num))
+				if util.verbose:
+					log.write("player {0} goes to the nearest railroad.\n".format(self.num))
 				moved = False
 				# Go through possible railroad
 				for pos in board.TILES_TRANSPORT:
@@ -244,47 +281,55 @@ class Player:
 			# If negative, thus should move back, do that
 			elif card.value <= 0:
 				self.position, _ = self.getNewPosition(card.value, board)
-				log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
+				if util.verbose:
+					log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
 			# Move player to given position otherwise
 			else:
 				self.position = card.value
 				if self.position == board.TILES_JAIL[0]:
 					self.at_jail = True
-				log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
+				if util.verbose:
+					log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
 		# card for get money
 		elif card.kind == "cash":
 			if self.cash >= 0:
 				self.cash += card.value
 			else:
 				self.fine_money(-self.cash)
-			log.write("player {0} gets {1} cash, currently has {2} cash.\n".format(self.num, card.value, self.cash))
+			if util.verbose:
+				log.write("player {0} gets {1} cash, currently has {2} cash.\n".format(self.num, card.value, self.cash))
 
 		# card for tax
 		elif card.kind == "tax":
 			fined = card.value[0] * self.house + card.value[1] * self.hotel
 			self.fine_money(fined)
-			log.write("player {0} pay {1} tax, currently has {2} cash.\n".format(self.num, fined, self.cash))
+			if util.verbose:
+				log.write("player {0} pay {1} tax, currently has {2} cash.\n".format(self.num, fined, self.cash))
 
 	def doCommunityCard(self, card, board):
 		# Go to given position if card is of the advance kind
 		# Check the type of the chance card
 		# card for moving
-		log.write("player {0} get a community card {1}.\n".format(self.num, card))
+		if util.verbose:
+			log.write("player {0} get a community card {1}.\n".format(self.num, card))
 		if card.kind == "advance":
 			self.position = card.value
 			if self.position == board.TILES_JAIL[0]:
 				self.at_jail = True
-			log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
+			if util.verbose:
+				log.write("player {0} moves to {1}.\n".format(self.num, board.TILE_NAME[self.position]))
 		# card for get money
 		elif card.kind == "cash":
 			self.cash += card.value
-			log.write("player {0} gets {1} cash, currently has {2} cash.\n".format(self.num, card.value, self.cash))
+			if util.verbose:
+				log.write("player {0} gets {1} cash, currently has {2} cash.\n".format(self.num, card.value, self.cash))
 
 		# card for tax
 		elif card.kind == "tax":
 			fined = card.value[0] * self.house + card.value[1] * self.hotel
 			self.fine_money(fined)
-			log.write("player {0} pay {1} tax, currently has {2} cash.\n".format(self.num, fined, self.cash))
+			if util.verbose:
+				log.write("player {0} pay {1} tax, currently has {2} cash.\n".format(self.num, fined, self.cash))
 
 	def total_property(self):
 		land_value = 0
@@ -405,6 +450,9 @@ class Board:
 
 	def __init__(self):
 		# Check if total amount of tiles is correct
+		for b in self.TILE_BUILDING:
+			if b is not None:
+				b.reset()
 		tilesCount = self.getSize()
 		if tilesCount != 41:
 			print("Game board consists of %i tiles, instead of 41!" % tilesCount)
@@ -437,7 +485,7 @@ class Board:
 
 	def hit(self, tile):
 		# Increment tile hit count in array
-		print(tile)
+		# print(tile)
 		self.hits[tile] += 1
 
 	def getSize(self):

@@ -1,7 +1,5 @@
 from objects import *
 
-# TODO: count the number of simulations locally
-
 
 class Results:
 

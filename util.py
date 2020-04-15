@@ -3,6 +3,14 @@ import argparse
 
 
 log = open("logs.txt", "w")
+metadata = open("metadata.txt", "w")
+
+
+verbose = False
+
+
+def print_verbose():
+	print(verbose)
 
 
 def diceThrow():

@@ -1,31 +1,37 @@
-from util import *
-from objects import *
-from chance import *
-from community import *
+from util import log, diceThrow
+import util
+from objects import Board
+from chance import ChancePile
+from community import CommunityPile
 
 
 class Game:
 
 	def __init__(self, players, rounds):
+		self.info_dic = {"bankrupt_turn":{}}
 		self.players = players
 		self.board = Board()
 		self.chancePile = ChancePile()
 		self.communityPile = CommunityPile()
 		self.rounds = rounds
 		self.bankrupt_count = 0
+		self.cur_round = 0
 
 	def run(self):
 		# Play the game for a given amount of rounds
 		for i in range(0, self.rounds):
-			print("round", i)
-
-			log.write("round {0}:\n".format(i))
+			# print("round", i)
+			self.cur_round = i
+			if util.verbose:
+				log.write("round {0}:\n".format(i))
 			end = self.round()
-			log.write("\n")
+			if util.verbose:
+				log.write("\n")
 			if end:
 				break
-			for player in self.players:
-				print("player {0}: cash {1}, property {2}".format(player.num, player.cash, player.total_property()))
+			# for player in self.players:
+			# 	print("player {0}: cash {1}, property {2}".format(player.num, player.cash, player.total_property()))
+		return self.info_dic
 
 	def round(self):
 		# Each round, every player should get its turn
@@ -34,24 +40,33 @@ class Game:
 				self.turn(player)
 				if player.is_bankrupt():
 					player.bankrupt()
-					log.write("player {} has bankrupted, return all properties to the bank.\n".format(player.num))
+					self.info_dic["bankrupt_turn"][player.num] = self.cur_round
+					if util.verbose:
+						log.write("player {} has bankrupted, return all properties to the bank.\n".format(player.num))
 					self.bankrupt_count += 1
-			if len(self.players) - self.bankrupt_count == 1:
+			if len(self.players) - self.bankrupt_count <= 1:
 				for i in self.players:
 					if not i.is_bankrupt():
-						log.write("player {} wins\n".format(i.num))
+						if util.verbose:
+							self.info_dic["bankrupt_turn"][i.num] = -1
+							self.info_dic["winner"] = i.num
+							self.info_dic["end"] = self.cur_round
+							log.write("player {} wins\n".format(i.num))
 				return True
-
-		log.write("\n")
+		if util.verbose:
+			log.write("\n")
 		for player in self.players:
-			log.write("player {} has {} cash.\n".format(player.num, player.cash))
-		log.write("\n")
+			if util.verbose:
+				log.write("player {} has {} cash.\n".format(player.num, player.cash))
+		if util.verbose:
+			log.write("\n")
 		return False
 
 	def turn(self, player):
 		# Get number of eyes on dice
 		dice1, dice2 = diceThrow()
-		log.write("player {0} rolls two dices, {1} and {2}.\n".format(player.num, dice1, dice2))
+		if util.verbose:
+			log.write("player {0} rolls two dices, {1} and {2}.\n".format(player.num, dice1, dice2))
 		# Move the player to new position, goingToJail True is 3 doubles thrown
 		player.move(self.board, dice1, dice2)
 
@@ -82,13 +97,14 @@ class Game:
 		for building_to_sell in player.building_to_sell_list:
 			for other_player in self.players:
 				if not other_player.is_bankrupt():
-					boundary = other_player.choose_boundary(other_player.t_strategy)
+					boundary = other_player.choose_boundary(other_player.t_strategy, other_player.t_para)
 					if other_player != player and other_player.cash - building_to_sell.cur_price >= boundary:
 						other_player.cash -= building_to_sell.cur_price
 						building_to_sell.set_owner(other_player)
 						other_player.building.append(building_to_sell)
 						player.cash += int(building_to_sell.cur_price * 0.1)
-						log.write("player {0} successfully sell land {1} to player {2}, get the remaining {3}, player {0} currently has {4}, player {1} has {5}.".format(player.num, building_to_sell.name, other_player.num, building_to_sell.cur_price * 0.1, player.cash, other_player.cash))
+						if util.verbose:
+							log.write("player {0} successfully sell land {1} to player {2}, get the remaining {3}, player {0} currently has {4}, player {1} has {5}.".format(player.num, building_to_sell.name, other_player.num, building_to_sell.cur_price * 0.1, player.cash, other_player.cash))
 						break
 		player.building_to_sell_list = []
 
