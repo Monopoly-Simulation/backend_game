@@ -182,13 +182,13 @@ def run_simulation(args):
 		metadata_dic[str(players)]["avg_time"] = avg_time
 		metadata_dic[str(players)]["avg_round"] = avg_round
 		metadata_dic[str(players)]["total_time"] = duration
-		metadata.write(json.dumps(metadata_dic[str(players)]))
-		metadata.write("\n")
+		metadata.write(json.dumps(metadata_dic[str(players)]) + "\n")
 			# speed = i / (now - start)
-		count += 1
+
 		# Display the progress every 1/1000 of the way to begin finished
 		print("{} out of {} combination finished.".format(count, len(player_combination)))
-
+		count += 1
+	metadata.write(json.dumps(metadata_dic) + "\n")
 	# Print that the simulation is finished
 	print("\nDone!")
 
