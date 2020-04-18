@@ -19,6 +19,7 @@ class Game:
 
 	def run(self):
 		# Play the game for a given amount of rounds
+		end = False
 		for i in range(0, self.rounds):
 			# print("round", i)
 			self.cur_round = i
@@ -31,6 +32,9 @@ class Game:
 				break
 			# for player in self.players:
 			# 	print("player {0}: cash {1}, property {2}".format(player.num, player.cash, player.total_property()))
+		if not end:
+			self.info_dic["end"] = -1
+
 		return self.info_dic
 
 	def round(self):
@@ -48,10 +52,10 @@ class Game:
 				for i in self.players:
 					if not i.is_bankrupt():
 						if util.verbose:
-							self.info_dic["bankrupt_turn"][i.num] = -1
-							self.info_dic["winner"] = i.num
-							self.info_dic["end"] = self.cur_round
 							log.write("player {} wins\n".format(i.num))
+						self.info_dic["bankrupt_turn"][i.num] = -1
+						self.info_dic["winner"] = i.num
+						self.info_dic["end"] = self.cur_round
 				return True
 		if util.verbose:
 			log.write("\n")
