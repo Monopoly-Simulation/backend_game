@@ -1,16 +1,27 @@
 from random import randint
+import platform
 import argparse
 
 
 log = open("logs.txt", "w")
 metadata = open("metadata.txt", "w")
-
-
 verbose = False
 
+os_name = platform.system()
+is_prod = os_name == 'Linux'
+
+def dev_print(args):
+    if not is_prod:
+        print(args)
+
+def prod_print(args):
+    if is_prod:
+        print(args)
+    else:
+        metadata.write(args)
 
 def print_verbose():
-	print(verbose)
+	dev_print(verbose)
 
 
 def diceThrow():

@@ -1,6 +1,7 @@
 import sys
 from objects import Player
 from game import Game
+from util import dev_print
 import random
 random.seed(0)
 
@@ -20,5 +21,5 @@ def run_simulation(args):
 
 
 if __name__ == '__main__':
-    print()
+    dev_print()
     run_simulation(args=sys.argv[1:])
