@@ -8,17 +8,22 @@ metadata = open("metadata.txt", "w")
 verbose = False
 
 os_name = platform.system()
-is_prod = os_name == 'Linux'
+is_prod = (os_name == 'Linux')
 
-def dev_print(args):
-    if not is_prod:
-        print(args)
+
+def dev_print(*args):
+	if not is_prod:
+		for i in args:
+			print(i, end=" ")
+		print()
+
 
 def prod_print(args):
-    if is_prod:
-        print(args)
-    else:
-        metadata.write(args)
+	if is_prod:
+		print(args)
+	else:
+		metadata.write(args)
+
 
 def print_verbose():
 	dev_print(verbose)

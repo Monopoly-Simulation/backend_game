@@ -13,6 +13,7 @@ import json
 random.seed(0)
 metadata_dic = {}
 
+
 def check_same_n_of_paras(n, lst):
 	base = lst[2]
 	for i in range(n):
@@ -225,8 +226,7 @@ def run_simulation(args):
 		count += 1
 		simulation_list.append(cur_simulation_dic)
 	metadata_dic["simulations"] = simulation_list
-	metadata.write(json.dumps(metadata_dic) + "\n")
-  prod_print(json.dumps(metadata_dic) + "\n")
+	prod_print(json.dumps(metadata_dic) + "\n")
 	# Print that the simulation is finished
 	dev_print("\nDone!")
 
