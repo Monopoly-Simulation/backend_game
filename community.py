@@ -36,21 +36,17 @@ class CommunityPile:
 
 	def __init__(self):
 		# Generate an order of chance cards
-		self.pile = random.sample(range(0, len(self.CARDS)),
-			len(self.CARDS))
+		self.pile = random.sample(range(0, len(self.CARDS)), len(self.CARDS))
 
 	def pullCard(self):
 		# Get the card that is currently at the top of the pile
 		card = self.pile[0]
 
 		# Generate new pile with picked card at the bottom
-		newPile = [None] * len(self.pile)
 		for i in range(0, len(self.pile) - 1):
-			newPile[i] = self.pile[i + 1]
-		newPile[len(newPile) - 1] = card
-
+			self.pile[i] = self.pile[i + 1]
+		self.pile[-1] = card
 		# Set the new pile to be the pile
-		self.pile = newPile
 		
 		# Return the card that was originally at the top of the pile
 		return self.CARDS[card]

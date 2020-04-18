@@ -10,6 +10,7 @@ import argparse
 import numpy as np
 import json
 
+random.seed(0)
 metadata_dic = {}
 
 def check_same_n_of_paras(n, lst):
@@ -59,11 +60,13 @@ def check_validity_and_broadcast(args):
 	n_tax = len(args.tax)
 	n_start_capital = len(args.start_capital)
 
-	v1 = (n_players == n_t_s == n_u_s == n_b_s) and (n_income == n_tax == n_start_capital == n_t_r == n_u_r == n_b_r == n_players * 3)
+	v1 = (n_players == n_t_s == n_u_s == n_b_s) and (
+				n_income == n_tax == n_start_capital == n_t_r == n_u_r == n_b_r == n_players * 3)
 	if args.cross_compare:
 		v = v1
 	else:
-		v = v1 and check_same_n_of_paras(n_players, args.trading_range) and check_same_n_of_paras(n_players, args.upgrading_range) and \
+		v = v1 and check_same_n_of_paras(n_players, args.trading_range) and check_same_n_of_paras(n_players,
+																								  args.upgrading_range) and \
 			check_same_n_of_paras(n_players, args.buying_range) and check_same_n_of_paras(n_players, args.income) and \
 			check_same_n_of_paras(n_players, args.tax) and check_same_n_of_paras(n_players, args.start_capital)
 	return v, args
@@ -108,18 +111,25 @@ def run_simulation(args):
 	# for k in range(num_of_players):
 	# 	dev_print(np.arange(args.buying_range[k * 3], args.buying_range[k * 3 + 1], args.buying_range[k * 3 + 2]))
 
-	b_range = [[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(args.buying_range[k * 3 + 2])] for k in
+	b_range = [
+		[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(args.buying_range[k * 3 + 2])] for k
+		in
+		range(num_of_players)]
+	u_range = [[args.upgrading_range[k * 3] + args.upgrading_range[k * 3 + 1] * i for i in
+				range(args.upgrading_range[k * 3 + 2])] for k in
 			   range(num_of_players)]
-	u_range = [[args.upgrading_range[k * 3] + args.upgrading_range[k * 3 + 1] * i for i in range(args.upgrading_range[k * 3 + 2])] for k in
-			   range(num_of_players)]
-	t_range = [[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(args.trading_range[k * 3 + 2])] for k in
-			   range(num_of_players)]
+	t_range = [
+		[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(args.trading_range[k * 3 + 2])]
+		for k in
+		range(num_of_players)]
 	income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(args.income[k * 3 + 2])] for k in
-			   range(num_of_players)]
-	tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(args.tax[k * 3 + 2])] for k in
-			   range(num_of_players)]
-	start_capital = [[args.start_capital[k * 3] + args.start_capital[k * 3 + 1] * i for i in range(args.start_capital[k * 3 + 2])] for k in
-			   range(num_of_players)]
+			  range(num_of_players)]
+	tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(int(args.tax[k * 3 + 2]))] for k in
+		   range(num_of_players)]
+	start_capital = [
+		[args.start_capital[k * 3] + args.start_capital[k * 3 + 1] * i for i in range(args.start_capital[k * 3 + 2])]
+		for k in
+		range(num_of_players)]
 
 	player_params = [[b_range[k], u_range[k], t_range[k], income[k], tax[k], start_capital[k]] for k in
 					 range(num_of_players)]
@@ -135,25 +145,48 @@ def run_simulation(args):
 			for p in single_player_param_list[num]:
 				tmp.append(Player(num=num, buying_strategy=b_strategy[num], upgrading_strategy=u_strategy[num],
 								  trading_strategy=t_strategy[num],
-								  buying_para=p[0], upgrading_para=p[1], trading_para=p[2]))
+								  buying_para=p[0], upgrading_para=p[1], trading_para=p[2], income=p[3], tax=p[4],
+								  start_capital=p[5]))
 			single_player_list.append(tmp)
 
 		player_combination = generate_combination(num=num_of_players, params=single_player_list)
 	else:
-		n = args.tax[2]
+		n = int(args.tax[2])
 		player_combination = []
 		for i in range(n):
 			tmp = []
 			for num in range(num_of_players):
-				tmp.append(Player(num=num, buying_strategy=b_strategy[num], upgrading_strategy=u_strategy[num], trading_strategy=b_strategy[num],
-								  buying_para=b_range[num][i], upgrading_para=u_range[num][i], trading_para=t_range[num][i],
-								  income=income[num][i], tax=tax[num][i], cash=start_capital[num][i]))
+				tmp_player = Player(num=num, buying_strategy=b_strategy[num], upgrading_strategy=u_strategy[num],
+									trading_strategy=b_strategy[num],
+									buying_para=b_range[num][i], upgrading_para=u_range[num][i],
+									trading_para=t_range[num][i],
+									income=income[num][i], tax=tax[num][i], start_capital=start_capital[num][i])
+				# print(tmp_player.income)
+				tmp.append(tmp_player)
 			player_combination.append(tmp)
+	# print(player_combination)
 	count = 1
 	last = time.time()
+	simulation_list = []
 	for players in player_combination:
-		metadata_dic[str(players)] = {}
+		cur_simulation_dic = {"settings": {}, "details": {}, "results": {}}
+		player_info_lst = []
+		for i in range(len(players)):
+			cur_player_dic = {
+				"buy_s": players[i].b_strategy,
+				"buy_para": players[i].b_para,
+				"trade_s": players[i].t_strategy,
+				"trade_para": players[i].t_para,
+				"upgrade_s": players[i].u_strategy,
+				"upgrade_para": players[i].u_para,
+				"income": players[i].income,
+				"tax": players[i].tax,
+				"start_capital": players[i].start_capital}
+			player_info_lst.append(cur_player_dic)
+		cur_simulation_dic["settings"] = player_info_lst
+
 		total_rounds = 0
+		valid_simulation = 0
 		if util.verbose:
 			log.write("player combination: " + str(players) + "\n")
 		for i in range(1, args.number + 1):
@@ -163,34 +196,43 @@ def run_simulation(args):
 				n.reset()
 			g = Game(players, rounds=args.rounds)
 			tmp_info_dic = g.run()
-			total_rounds += tmp_info_dic["end"]
-			metadata_dic[str(players)][i] = tmp_info_dic
+			if tmp_info_dic["end"] != -1:
+				total_rounds += tmp_info_dic["end"]
+				valid_simulation += 1
+
+			cur_simulation_dic["details"][i] = tmp_info_dic
 			if i % 100 == 0:
 				dev_print("{} out of {} simulation of combination {} finished.".format(i, args.number, count))
 
-			# r.addHitResults(g.board.hits)
+		# r.addHitResults(g.board.hits)
 
-			# Calculate the amount of simulations per second
+		# Calculate the amount of simulations per second
 		now = time.time()
 		duration = now - last
 		avg_time = duration / args.number
-		avg_round = total_rounds / args.number
+		avg_round = total_rounds / valid_simulation
 		last = time.time()
-		metadata_dic[str(players)]["avg_time"] = avg_time
-		metadata_dic[str(players)]["avg_round"] = avg_round
-		metadata_dic[str(players)]["total_time"] = duration
-		prod_print(json.dumps(metadata_dic[str(players)]) + "\n")
-			# speed = i / (now - start)
 
+		cur_simulation_dic["results"]["avg_time"] = avg_time
+		cur_simulation_dic["results"]["avg_round"] = avg_round
+		cur_simulation_dic["results"]["total_time"] = duration
+		# speed = i / (now - start)
+		dev_print("ended: ", valid_simulation)
+		dev_print("avg_time: ", avg_time)
+		dev_print("avg_round: ", avg_round)
 		# Display the progress every 1/1000 of the way to begin finished
 		dev_print("{} out of {} combination finished.".format(count, len(player_combination)))
 		count += 1
-	prod_print(json.dumps(metadata_dic) + "\n")
+		simulation_list.append(cur_simulation_dic)
+	metadata_dic["simulations"] = simulation_list
+	metadata.write(json.dumps(metadata_dic) + "\n")
+  prod_print(json.dumps(metadata_dic) + "\n")
 	# Print that the simulation is finished
 	dev_print("\nDone!")
 
-	# Same the results to a csv
-	# r.writeHTML(args.number, args.players, args.rounds)
+
+# Same the results to a csv
+# r.writeHTML(args.number, args.players, args.rounds)
 
 
 if __name__ == "__main__":
