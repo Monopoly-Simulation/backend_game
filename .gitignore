@@ -1,0 +1,9 @@
+# python binary code
+*.pyc
+
+# output files
+logs.txt
+metadata.txt
+
+# editor config
+.vscode

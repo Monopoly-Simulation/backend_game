@@ -1,7 +1,6 @@
-from util import log
+from util import log, dev_print
 import util
 import random
-
 
 class Building:
 
@@ -98,7 +97,7 @@ class Player:
 		target = None
 		price = float("inf")
 		for building in self.building:
-			# print(building.base_price * 0.9 + self.cash, c, building.base_price)
+			# dev_print(building.base_price * 0.9 + self.cash, c, building.base_price)
 			if building.cur_price * 0.9 + self.cash > c and building.cur_price < price:
 				price = building.base_price
 				target = building
@@ -159,10 +158,10 @@ class Player:
 		boundary = self.choose_boundary(self.t_strategy, self.t_para)
 		if self.cash - fined < boundary:
 			building_to_sell = self.find_min_house_to_sell(fined)
-			# print(self.building)
+			# dev_print(self.building)
 			if building_to_sell is not None:
 				building_to_sell.sell()
-				# print("here", building_to_sell)
+				# dev_print("here", building_to_sell)
 				self.building.remove(building_to_sell)
 				sell_price = int(building_to_sell.cur_price * 0.9)
 				self.cash += sell_price
@@ -456,7 +455,7 @@ class Board:
 				b.reset()
 		tilesCount = self.getSize()
 		if tilesCount != 41:
-			print("Game board consists of %i tiles, instead of 41!" % tilesCount)
+			dev_print("Game board consists of %i tiles, instead of 41!" % tilesCount)
 
 		# Setup array to keep track of times a player had landed on a tile
 		self.hits = [0] * 41
@@ -486,7 +485,7 @@ class Board:
 
 	def hit(self, tile):
 		# Increment tile hit count in array
-		# print(tile)
+		# dev_print(tile)
 		self.hits[tile] += 1
 
 	def getSize(self):
