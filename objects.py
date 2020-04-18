@@ -36,14 +36,15 @@ class Building:
 
 class Player:
 
-	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy, buying_para, upgrading_para, trading_para, tax=0, income=200, cash=100):
+	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy, buying_para, upgrading_para, trading_para, tax=0, income=100, start_capital=200):
+		self.start_capital = start_capital
 		self.num = num  # player id
 		self.position = 0
 		self.consecutiveDoubles = 0
 		self.consecutive_not_Doubles = 0
 		self.at_jail = False
 
-		self.cash = cash
+		self.cash = self.start_capital
 		self.income = income
 		self.tax = tax
 
@@ -70,7 +71,7 @@ class Player:
 		return money_to_pay
 
 	def reset(self):
-		self.__init__(self.num, self.b_strategy, self.u_strategy, self.t_strategy, self.b_para, self.u_para, self.t_para)
+		self.__init__(self.num, self.b_strategy, self.u_strategy, self.t_strategy, self.b_para, self.u_para, self.t_para, self.tax, self.income, self.start_capital)
 
 	def __str__(self):
 		s = "buy s:{}, buy para:{}, upgrade s:{}, upgrade para:{}, trade s:{}, trade para:{}.".format(self.b_strategy, self.b_para, self.u_strategy, self.u_para, self.t_strategy, self.t_para)
