@@ -1,9 +1,8 @@
-from util import log, diceThrow
+from util import log, diceThrow, dev_print
 import util
 from objects import Board
 from chance import ChancePile
 from community import CommunityPile
-
 
 class Game:
 
@@ -20,7 +19,7 @@ class Game:
 	def run(self):
 		# Play the game for a given amount of rounds
 		for i in range(0, self.rounds):
-			# print("round", i)
+			# dev_print("round", i)
 			self.cur_round = i
 			if util.verbose:
 				log.write("round {0}:\n".format(i))
@@ -30,7 +29,7 @@ class Game:
 			if end:
 				break
 			# for player in self.players:
-			# 	print("player {0}: cash {1}, property {2}".format(player.num, player.cash, player.total_property()))
+			# 	dev_print("player {0}: cash {1}, property {2}".format(player.num, player.cash, player.total_property()))
 		return self.info_dic
 
 	def round(self):

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import util
 from game import Game
-from util import log, metadata
+from util import log, metadata, dev_print, prod_print
 # from results import *
 from objects import Player
 import random
@@ -10,10 +10,7 @@ import argparse
 import numpy as np
 import json
 
-
-random.seed(0)
 metadata_dic = {}
-
 
 def check_same_n_of_paras(n, lst):
 	base = lst[2]
@@ -97,19 +94,19 @@ def run_simulation(args):
 	if args.verbose:
 		util.verbose = True
 	# Print start message
-	print("Starting simulation")
+	dev_print("Starting simulation")
 
 	# Set simluation variables
 	num_of_players = args.players
 	# Go through set amount of simulations
 	# Start a new game, run it and save the results
-	# print(args.trading_range)
-	# print(args.upgrading_range)
+	# dev_print(args.trading_range)
+	# dev_print(args.upgrading_range)
 	b_strategy = args.buying_strategy
 	u_strategy = args.upgrading_strategy
 	t_strategy = args.trading_strategy
 	# for k in range(num_of_players):
-	# 	print(np.arange(args.buying_range[k * 3], args.buying_range[k * 3 + 1], args.buying_range[k * 3 + 2]))
+	# 	dev_print(np.arange(args.buying_range[k * 3], args.buying_range[k * 3 + 1], args.buying_range[k * 3 + 2]))
 
 	b_range = [[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(args.buying_range[k * 3 + 2])] for k in
 			   range(num_of_players)]
@@ -126,11 +123,11 @@ def run_simulation(args):
 
 	player_params = [[b_range[k], u_range[k], t_range[k], income[k], tax[k], start_capital[k]] for k in
 					 range(num_of_players)]
-	# print(player_params)
+	# dev_print(player_params)
 	single_player_param_list = []
 	for params in player_params:
 		single_player_param_list.append(generate_combination(num=6, params=params))
-	# print(single_player_param_list)
+	# dev_print(single_player_param_list)
 	single_player_list = []
 	if args.cross_compare:
 		for num in range(num_of_players):
@@ -169,7 +166,7 @@ def run_simulation(args):
 			total_rounds += tmp_info_dic["end"]
 			metadata_dic[str(players)][i] = tmp_info_dic
 			if i % 100 == 0:
-				print("{} out of {} simulation of combination {} finished.".format(i, args.number, count))
+				dev_print("{} out of {} simulation of combination {} finished.".format(i, args.number, count))
 
 			# r.addHitResults(g.board.hits)
 
@@ -182,15 +179,15 @@ def run_simulation(args):
 		metadata_dic[str(players)]["avg_time"] = avg_time
 		metadata_dic[str(players)]["avg_round"] = avg_round
 		metadata_dic[str(players)]["total_time"] = duration
-		metadata.write(json.dumps(metadata_dic[str(players)]) + "\n")
+		prod_print(json.dumps(metadata_dic[str(players)]) + "\n")
 			# speed = i / (now - start)
 
 		# Display the progress every 1/1000 of the way to begin finished
-		print("{} out of {} combination finished.".format(count, len(player_combination)))
+		dev_print("{} out of {} combination finished.".format(count, len(player_combination)))
 		count += 1
-	metadata.write(json.dumps(metadata_dic) + "\n")
+	prod_print(json.dumps(metadata_dic) + "\n")
 	# Print that the simulation is finished
-	print("\nDone!")
+	dev_print("\nDone!")
 
 	# Same the results to a csv
 	# r.writeHTML(args.number, args.players, args.rounds)
