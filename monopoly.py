@@ -46,11 +46,11 @@ def check_validity_and_broadcast(args):
 	if n_b_r == 3:
 		args.buying_range *= n_players
 	if n_income == 3:
-		args.income *= 3
+		args.income *= n_players
 	if n_tax == 3:
-		args.tax *= 3
+		args.tax *= n_players
 	if n_start_capital == 3:
-		args.start_capital *= 3
+		args.start_capital *= n_players
 	n_t_s = len(args.trading_strategy)
 	n_u_s = len(args.upgrading_strategy)
 	n_b_s = len(args.buying_strategy)
