@@ -2,6 +2,7 @@ from util import log, dev_print
 import util
 import random
 
+
 class Building:
 
 	def __init__(self, name, price):
@@ -66,7 +67,7 @@ class Player:
 
 	def pay_tax(self):
 		money_to_pay = self.tax * self.cash if 0 < self.tax < 1 else self.tax
-		self.cash -= money_to_pay
+		self.fine_money(money_to_pay)
 		return money_to_pay
 
 	def reset(self):

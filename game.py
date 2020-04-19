@@ -4,6 +4,7 @@ from objects import Board
 from chance import ChancePile
 from community import CommunityPile
 
+
 class Game:
 
 	def __init__(self, players, rounds):
@@ -120,3 +121,4 @@ class Game:
 
 	def plot_para(self):
 		return self.info_dic['end'], self.players[0].income, self.players[0].tax, self.players[0].start_capital
+

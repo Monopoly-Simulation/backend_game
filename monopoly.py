@@ -9,7 +9,7 @@ import time
 import argparse
 import numpy as np
 import json
-import matplotlib.pyplot as plt
+
 random.seed(0)
 metadata_dic = {}
 
@@ -46,11 +46,11 @@ def check_validity_and_broadcast(args):
 	if n_b_r == 3:
 		args.buying_range *= n_players
 	if n_income == 3:
-		args.income *= 3
+		args.income *= n_players
 	if n_tax == 3:
-		args.tax *= 3
+		args.tax *= n_players
 	if n_start_capital == 3:
-		args.start_capital *= 3
+		args.start_capital *= n_players
 	n_t_s = len(args.trading_strategy)
 	n_u_s = len(args.upgrading_strategy)
 	n_b_s = len(args.buying_strategy)
@@ -112,27 +112,17 @@ def run_simulation(args):
 	# for k in range(num_of_players):
 	# 	dev_print(np.arange(args.buying_range[k * 3], args.buying_range[k * 3 + 1], args.buying_range[k * 3 + 2]))
 
-	plt_rounds = []
-	plt_inc = []
-	plt_tax = []
-	plt_scap = []
-
-
 	b_range = [
-		[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(args.buying_range[k * 3 + 2])] for k
+		[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(int(args.buying_range[k * 3 + 2]))] for k
 		in
 		range(num_of_players)]
 	u_range = [[args.upgrading_range[k * 3] + args.upgrading_range[k * 3 + 1] * i for i in
-				range(args.upgrading_range[k * 3 + 2])] for k in
-			   range(num_of_players)]
-	t_range = [
-		[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(args.trading_range[k * 3 + 2])]
+				range(int(args.upgrading_range[k * 3 + 2]))] for k in range(num_of_players)]
+	t_range = [[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(int(args.trading_range[k * 3 + 2]))]
 		for k in
 		range(num_of_players)]
-	income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(args.income[k * 3 + 2])] for k in
-			  range(num_of_players)]
-	tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(int(args.tax[k * 3 + 2]))] for k in
-		   range(num_of_players)]
+	income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(args.income[k * 3 + 2])] for k in range(num_of_players)]
+	tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(int(args.tax[k * 3 + 2]))] for k in range(num_of_players)]
 	start_capital = [
 		[args.start_capital[k * 3] + args.start_capital[k * 3 + 1] * i for i in range(args.start_capital[k * 3 + 2])]
 		for k in
@@ -209,6 +199,7 @@ def run_simulation(args):
 			plt_inc.append(inc)
 			plt_tax.append(t)
 			plt_scap.append(scap)
+
 			if tmp_info_dic["end"] != -1:
 				total_rounds += tmp_info_dic["end"]
 				valid_simulation += 1
@@ -241,14 +232,6 @@ def run_simulation(args):
 	prod_print(json.dumps(metadata_dic) + "\n")
 	# Print that the simulation is finished
 	dev_print("\nDone!")
-
-	fig, axs = plt.subplots(3)
-	fig.suptitle('Vertically stacked subplots')
-	axs[0].plot(plt_inc, plt_rounds)
-	axs[1].plot(plt_tax, plt_rounds)
-	axs[2].plot(plt_scap, plt_rounds)
-	fig.savefig('plot.png')
-	print(plt_rounds)
 
 
 # Same the results to a csv
