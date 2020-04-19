@@ -117,3 +117,6 @@ class Game:
 		# Go again if not on jail and has thrown double
 		if tileType != "jail" and dice1 == dice2:
 			self.turn(player)
+
+	def plot_para(self):
+		return self.cur_round, self.players[0].income, self.players[0].tax, self.players[0].start_capital
