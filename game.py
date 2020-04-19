@@ -4,6 +4,7 @@ from objects import Board
 from chance import ChancePile
 from community import CommunityPile
 
+
 class Game:
 
 	def __init__(self, players, rounds):
