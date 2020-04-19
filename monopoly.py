@@ -113,20 +113,16 @@ def run_simulation(args):
 	# 	dev_print(np.arange(args.buying_range[k * 3], args.buying_range[k * 3 + 1], args.buying_range[k * 3 + 2]))
 
 	b_range = [
-		[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(args.buying_range[k * 3 + 2])] for k
+		[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(int(args.buying_range[k * 3 + 2]))] for k
 		in
 		range(num_of_players)]
 	u_range = [[args.upgrading_range[k * 3] + args.upgrading_range[k * 3 + 1] * i for i in
-				range(args.upgrading_range[k * 3 + 2])] for k in
-			   range(num_of_players)]
-	t_range = [
-		[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(args.trading_range[k * 3 + 2])]
+				range(int(args.upgrading_range[k * 3 + 2]))] for k in range(num_of_players)]
+	t_range = [[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(int(args.trading_range[k * 3 + 2]))]
 		for k in
 		range(num_of_players)]
-	income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(args.income[k * 3 + 2])] for k in
-			  range(num_of_players)]
-	tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(int(args.tax[k * 3 + 2]))] for k in
-		   range(num_of_players)]
+	income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(args.income[k * 3 + 2])] for k in range(num_of_players)]
+	tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(int(args.tax[k * 3 + 2]))] for k in range(num_of_players)]
 	start_capital = [
 		[args.start_capital[k * 3] + args.start_capital[k * 3 + 1] * i for i in range(args.start_capital[k * 3 + 2])]
 		for k in
