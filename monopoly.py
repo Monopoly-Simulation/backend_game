@@ -202,12 +202,13 @@ def run_simulation(args):
 			for n in players:
 				n.reset()
 			g = Game(players, rounds=args.rounds)
+			tmp_info_dic = g.run()
+
 			round, inc, t, scap = g.plot_para()
 			plt_rounds.append(round)
 			plt_inc.append(inc)
 			plt_tax.append(t)
 			plt_scap.append(scap)
-			tmp_info_dic = g.run()
 			if tmp_info_dic["end"] != -1:
 				total_rounds += tmp_info_dic["end"]
 				valid_simulation += 1

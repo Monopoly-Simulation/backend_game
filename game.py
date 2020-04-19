@@ -119,4 +119,4 @@ class Game:
 			self.turn(player)
 
 	def plot_para(self):
-		return self.cur_round, self.players[0].income, self.players[0].tax, self.players[0].start_capital
+		return self.info_dic['end'], self.players[0].income, self.players[0].tax, self.players[0].start_capital
