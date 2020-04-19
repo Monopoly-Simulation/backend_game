@@ -9,6 +9,7 @@ import time
 import argparse
 import numpy as np
 import json
+import matplotlib.pylab as plt
 
 random.seed(0)
 metadata_dic = {}
@@ -112,6 +113,11 @@ def run_simulation(args):
 	# for k in range(num_of_players):
 	# 	dev_print(np.arange(args.buying_range[k * 3], args.buying_range[k * 3 + 1], args.buying_range[k * 3 + 2]))
 
+	plt_rounds = []
+	plt_inc = []
+	plt_tax = []
+	plt_scap = []
+
 	b_range = [
 		[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(int(args.buying_range[k * 3 + 2]))] for k
 		in
@@ -193,7 +199,11 @@ def run_simulation(args):
 				n.reset()
 			g = Game(players, rounds=args.rounds)
 			tmp_info_dic = g.run()
-
+			round, inc, t, scap = g.plot_para()
+			plt_rounds.append(round)
+			plt_inc.append(inc)
+			plt_tax.append(t)
+			plt_scap.append(scap)
 			round, inc, t, scap = g.plot_para()
 			plt_rounds.append(round)
 			plt_inc.append(inc)
@@ -232,6 +242,13 @@ def run_simulation(args):
 	prod_print(json.dumps(metadata_dic) + "\n")
 	# Print that the simulation is finished
 	dev_print("\nDone!")
+	fig, axs = plt.subplots(3)
+	fig.suptitle('Vertically stacked subplots')
+	axs[0].plot(plt_inc, plt_rounds)
+	axs[1].plot(plt_tax, plt_rounds)
+	axs[2].plot(plt_scap, plt_rounds)
+	print(plt_inc)
+	fig.savefig('plot.png')
 
 
 # Same the results to a csv
