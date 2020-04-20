@@ -113,10 +113,9 @@ def run_simulation(args):
 	# for k in range(num_of_players):
 	# 	dev_print(np.arange(args.buying_range[k * 3], args.buying_range[k * 3 + 1], args.buying_range[k * 3 + 2]))
 
-	plt_rounds = []
-	plt_inc = []
-	plt_tax = []
-	plt_scap = []
+	plt_inc = {}
+	plt_tax = {}
+	plt_scap = {}
 
 	b_range = [
 		[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(int(args.buying_range[k * 3 + 2]))] for k
@@ -192,6 +191,9 @@ def run_simulation(args):
 		valid_simulation = 0
 		if util.verbose:
 			log.write("player combination: " + str(players) + "\n")
+
+
+
 		for i in range(1, args.number + 1):
 			if util.verbose:
 				log.write("simulation number" + str(i) + "\n")
@@ -199,16 +201,11 @@ def run_simulation(args):
 				n.reset()
 			g = Game(players, rounds=args.rounds)
 			tmp_info_dic = g.run()
+
 			round, inc, t, scap = g.plot_para()
-			plt_rounds.append(round)
-			plt_inc.append(inc)
-			plt_tax.append(t)
-			plt_scap.append(scap)
-			round, inc, t, scap = g.plot_para()
-			plt_rounds.append(round)
-			plt_inc.append(inc)
-			plt_tax.append(t)
-			plt_scap.append(scap)
+			plt_inc[inc] = plt_inc.get(inc, []) + [round]
+			plt_tax[t] = plt_tax.get(t, []) + [round]
+			plt_scap[scap] = plt_scap.get(scap, []) + [round]
 
 			if tmp_info_dic["end"] != -1:
 				total_rounds += tmp_info_dic["end"]
@@ -244,10 +241,24 @@ def run_simulation(args):
 	dev_print("\nDone!")
 	fig, axs = plt.subplots(3)
 	fig.suptitle('Vertically stacked subplots')
-	axs[0].plot(plt_inc, plt_rounds)
-	axs[1].plot(plt_tax, plt_rounds)
-	axs[2].plot(plt_scap, plt_rounds)
-	print(plt_inc)
+
+	for key, value in plt_inc.items():
+		plt_inc[key] = sum(value)/len(value)
+	for key, value in plt_tax.items():
+		plt_tax[key] = sum(value)/len(value)
+	for key, value in plt_scap.items():
+		plt_scap[key] = sum(value)/len(value)
+
+	print(plt_inc, plt_tax, plt_scap)
+	axs[0].plot(list(plt_inc.keys()), list(plt_inc.values()))
+	axs[1].plot(list(plt_tax.keys()), list(plt_tax.values()))
+	axs[2].plot(list(plt_scap.keys()), list(plt_scap.values()))
+	axs[0].set_ylabel('average round')
+	axs[1].set_ylabel('average round')
+	axs[2].set_ylabel('average round')
+	axs[0].set_xlabel('income')
+	axs[1].set_xlabel('tax')
+	axs[2].set_xlabel('start capital')
 	fig.savefig('plot.png')
 
 
