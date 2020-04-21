@@ -25,7 +25,7 @@ def check_same_n_of_paras(n, lst):
 
 def check_validity_and_broadcast(args):
 	n_players = args.players
-	dev_print(args.__dict__)
+	print(args.__dict__)
 	n_t_s = len(args.trading_strategy)
 	n_u_s = len(args.upgrading_strategy)
 	n_b_s = len(args.buying_strategy)
@@ -37,6 +37,7 @@ def check_validity_and_broadcast(args):
 	n_start_capital = len(args.start_capital)
 
 	if args.mode == 0:
+		print("here")
 		n_dic = {"trading_strategy": n_t_s,
 				"upgrading_strategy": n_u_s,
 				"buying_strategy": n_b_s,
@@ -227,6 +228,12 @@ def run_simulation(args):
 				n.reset()
 			g = Game(players, rounds=args.rounds)
 			tmp_info_dic = g.run()
+
+			round, inc, t, scap = g.plot_para()
+			plt_rounds.append(round)
+			plt_inc.append(inc)
+			plt_tax.append(t)
+			plt_scap.append(scap)
 
 			if tmp_info_dic["end"] != -1:
 				total_rounds += tmp_info_dic["end"]
