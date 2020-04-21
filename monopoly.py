@@ -9,6 +9,7 @@ import time
 import argparse
 import numpy as np
 import json
+import matplotlib.pyplot as plt
 
 random.seed(0)
 metadata_dic = {}
@@ -24,33 +25,7 @@ def check_same_n_of_paras(n, lst):
 
 def check_validity_and_broadcast(args):
 	n_players = args.players
-	n_t_s = len(args.trading_strategy)
-	n_u_s = len(args.upgrading_strategy)
-	n_b_s = len(args.buying_strategy)
-	n_t_r = len(args.trading_range)
-	n_u_r = len(args.upgrading_range)
-	n_b_r = len(args.buying_range)
-	n_income = len(args.income)
-	n_tax = len(args.tax)
-	n_start_capital = len(args.start_capital)
-	if n_t_s == 1:
-		args.trading_strategy *= n_players
-	if n_b_s == 1:
-		args.buying_strategy *= n_players
-	if n_u_s == 1:
-		args.upgrading_strategy *= n_players
-	if n_t_r == 3:
-		args.trading_range *= n_players
-	if n_u_r == 3:
-		args.upgrading_range *= n_players
-	if n_b_r == 3:
-		args.buying_range *= n_players
-	if n_income == 3:
-		args.income *= n_players
-	if n_tax == 3:
-		args.tax *= n_players
-	if n_start_capital == 3:
-		args.start_capital *= n_players
+	print(args.__dict__)
 	n_t_s = len(args.trading_strategy)
 	n_u_s = len(args.upgrading_strategy)
 	n_b_s = len(args.buying_strategy)
@@ -61,16 +36,76 @@ def check_validity_and_broadcast(args):
 	n_tax = len(args.tax)
 	n_start_capital = len(args.start_capital)
 
-	v1 = (n_players == n_t_s == n_u_s == n_b_s) and (
-				n_income == n_tax == n_start_capital == n_t_r == n_u_r == n_b_r == n_players * 3)
-	if args.cross_compare:
-		v = v1
+	if args.mode == 0:
+		print("here")
+		n_dic = {"trading_strategy": n_t_s,
+				"upgrading_strategy": n_u_s,
+				"buying_strategy": n_b_s,
+				"trading_range": n_t_r,
+				"upgrading_range": n_u_r,
+				"buying_range": n_b_r,
+				"income": n_income,
+				"tax": n_tax,
+				"start_capital": n_start_capital}
+		change_variable = None
+		count = 0
+		for key, value in n_dic.items():
+			if value != 1:
+				count += 1
+				change_variable = key
+		if count != 1:
+			return False, None
+		number = args.__dict__[change_variable][2]
+		for key in n_dic.keys():
+			if key != change_variable:
+				if "strategy" in key:
+					args.__dict__[key] *= n_players
+				else:
+					args.__dict__[key] = [args.__dict__[key][0], 0, number] * n_players
+			else:
+				args.__dict__[key] *= n_players
+		args.change_variable = change_variable
+		return True, args
 	else:
-		v = v1 and check_same_n_of_paras(n_players, args.trading_range) and check_same_n_of_paras(n_players,
-																								  args.upgrading_range) and \
-			check_same_n_of_paras(n_players, args.buying_range) and check_same_n_of_paras(n_players, args.income) and \
-			check_same_n_of_paras(n_players, args.tax) and check_same_n_of_paras(n_players, args.start_capital)
-	return v, args
+
+		if n_t_s == 1:
+			args.trading_strategy *= n_players
+		if n_b_s == 1:
+			args.buying_strategy *= n_players
+		if n_u_s == 1:
+			args.upgrading_strategy *= n_players
+		if n_t_r == 3:
+			args.trading_range *= n_players
+		if n_u_r == 3:
+			args.upgrading_range *= n_players
+		if n_b_r == 3:
+			args.buying_range *= n_players
+		if n_income == 3:
+			args.income *= n_players
+		if n_tax == 3:
+			args.tax *= n_players
+		if n_start_capital == 3:
+			args.start_capital *= n_players
+		n_t_s = len(args.trading_strategy)
+		n_u_s = len(args.upgrading_strategy)
+		n_b_s = len(args.buying_strategy)
+		n_t_r = len(args.trading_range)
+		n_u_r = len(args.upgrading_range)
+		n_b_r = len(args.buying_range)
+		n_income = len(args.income)
+		n_tax = len(args.tax)
+		n_start_capital = len(args.start_capital)
+
+		v1 = (n_players == n_t_s == n_u_s == n_b_s) and (
+					n_income == n_tax == n_start_capital == n_t_r == n_u_r == n_b_r == n_players * 3)
+		if args.mode == 1:
+			v = v1
+		else:
+			v = v1 and check_same_n_of_paras(n_players, args.trading_range) and check_same_n_of_paras(n_players,
+																									  args.upgrading_range) and \
+				check_same_n_of_paras(n_players, args.buying_range) and check_same_n_of_paras(n_players, args.income) and \
+				check_same_n_of_paras(n_players, args.tax) and check_same_n_of_paras(n_players, args.start_capital)
+		return v, args
 
 
 def generate_combination(num, params):
@@ -136,7 +171,7 @@ def run_simulation(args):
 		single_player_param_list.append(generate_combination(num=6, params=params))
 	# dev_print(single_player_param_list)
 	single_player_list = []
-	if args.cross_compare:
+	if args.mode == 2:
 		for num in range(num_of_players):
 			tmp = []
 			for p in single_player_param_list[num]:
@@ -213,6 +248,7 @@ def run_simulation(args):
 		cur_simulation_dic["results"]["avg_time"] = avg_time
 		cur_simulation_dic["results"]["avg_round"] = avg_round
 		cur_simulation_dic["results"]["total_time"] = duration
+		cur_simulation_dic["results"]["ended_percent"] = valid_simulation / args.number
 		# speed = i / (now - start)
 		dev_print("ended: ", valid_simulation)
 		dev_print("avg_time: ", avg_time)
@@ -227,6 +263,23 @@ def run_simulation(args):
 	dev_print("\nDone!")
 
 
+def get_plot(args):
+	if args.__dict__ is not None:
+		para_to_plot = args.__dict__[args.__dict__["change_variable"]]
+		simulations = metadata_dic["simulations"]
+		x = [para_to_plot[0] + para_to_plot[1] * i for i in range(int(para_to_plot[2]))]
+		y_round = []
+		y_time = []
+		for simulation in simulations:
+			y_time.append(simulation["results"]["avg_time"])
+			y_round.append(simulation["results"]["avg_round"])
+		plt.subplot(211)
+		plt.plot(x, y_time)
+		plt.ylabel("avg_time")
+		plt.subplot(212)
+		plt.plot(x, y_round)
+		plt.ylabel("avg_round")
+		plt.show()
 # Same the results to a csv
 # r.writeHTML(args.number, args.players, args.rounds)
 
@@ -269,9 +322,10 @@ if __name__ == "__main__":
 	parser.add_argument("-v", "--verbose", const=True, action="store_const",
 						help="if turned on, generate a full log")
 
-	parser.add_argument("-cross", "--cross_compare", const=True, action="store_const",
-						help="if turned on, start cross compare, otherwise uses linear compare.")
+	parser.add_argument("-mode", "--mode", type=int, default=0, choices=[0, 1, 2],
+						help="mode 0: only variable is changing\nmode 1: linear compare\nmode 2: cross compare.")
 
+	parser.add_argument("-plot", "--change_variable", default=None)
 	args = parser.parse_args()
 
 	valid, args = check_validity_and_broadcast(args)
@@ -280,3 +334,4 @@ if __name__ == "__main__":
 		run_simulation(args)
 	else:
 		raise ValueError("parameter input not valid, please use -h option for help.")
+	get_plot(args)
