@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import util
 from game import Game
-from util import log, metadata, dev_print, prod_print
+from util import log, metadata, dev_print, prod_print, is_prod
 # from results import *
 from objects import Player
 import random
@@ -25,7 +25,7 @@ def check_same_n_of_paras(n, lst):
 
 def check_validity_and_broadcast(args):
 	n_players = args.players
-	dev_print(args.__dict__)
+	# dev_print(args.__dict__)
 	n_t_s = len(args.trading_strategy)
 	n_u_s = len(args.upgrading_strategy)
 	n_b_s = len(args.buying_strategy)
@@ -34,18 +34,19 @@ def check_validity_and_broadcast(args):
 	n_b_r = len(args.buying_range)
 	n_income = len(args.income)
 	n_tax = len(args.tax)
+	n_b_tax = len(args.building_tax)
 	n_start_capital = len(args.start_capital)
-
+	n_dic = {"trading_strategy": n_t_s,
+			"upgrading_strategy": n_u_s,
+			"buying_strategy": n_b_s,
+			"trading_range": n_t_r,
+			"upgrading_range": n_u_r,
+			"buying_range": n_b_r,
+			"income": n_income,
+			"tax": n_tax,
+			"start_capital": n_start_capital,
+			"building_tax": n_b_tax}
 	if args.mode == 0:
-		n_dic = {"trading_strategy": n_t_s,
-				"upgrading_strategy": n_u_s,
-				"buying_strategy": n_b_s,
-				"trading_range": n_t_r,
-				"upgrading_range": n_u_r,
-				"buying_range": n_b_r,
-				"income": n_income,
-				"tax": n_tax,
-				"start_capital": n_start_capital}
 		change_variable = None
 		count = 0
 		for key, value in n_dic.items():
@@ -65,7 +66,7 @@ def check_validity_and_broadcast(args):
 				args.__dict__[key] *= n_players
 		args.change_variable = change_variable
 		return True, args
-	else:
+	elif args.mode == 1 or args.mode == 3:
 
 		if n_t_s == 1:
 			args.trading_strategy *= n_players
@@ -83,6 +84,8 @@ def check_validity_and_broadcast(args):
 			args.income *= n_players
 		if n_tax == 3:
 			args.tax *= n_players
+		if n_b_tax == 3:
+			args.building_tax *= n_players
 		if n_start_capital == 3:
 			args.start_capital *= n_players
 		n_t_s = len(args.trading_strategy)
@@ -93,18 +96,33 @@ def check_validity_and_broadcast(args):
 		n_b_r = len(args.buying_range)
 		n_income = len(args.income)
 		n_tax = len(args.tax)
+		n_b_tax = len(args.building_tax)
 		n_start_capital = len(args.start_capital)
 
 		v1 = (n_players == n_t_s == n_u_s == n_b_s) and (
-					n_income == n_tax == n_start_capital == n_t_r == n_u_r == n_b_r == n_players * 3)
+					n_b_tax == n_income == n_tax == n_start_capital == n_t_r == n_u_r == n_b_r == n_players * 3)
 		if args.mode == 1:
 			v = v1
 		else:
 			v = v1 and check_same_n_of_paras(n_players, args.trading_range) and check_same_n_of_paras(n_players,
 																									  args.upgrading_range) and \
 				check_same_n_of_paras(n_players, args.buying_range) and check_same_n_of_paras(n_players, args.income) and \
-				check_same_n_of_paras(n_players, args.tax) and check_same_n_of_paras(n_players, args.start_capital)
+				check_same_n_of_paras(n_players, args.tax) and check_same_n_of_paras(n_players, args.start_capital) and check_same_n_of_paras(n_players, args.building_tax)
 		return v, args
+
+	elif args.mode == 2:
+		for u, v in n_dic.items():
+			if v == 1:
+				pass
+			elif v == 3:
+				tmp = args.__dict__[u]
+				args.__dict__[u] = [tmp[0] + k * tmp[1] for k in range(int(tmp[2]))]
+			else:
+				return False, None
+
+		return True, args
+	else:
+		raise ValueError("Unknown mode.")
 
 
 def generate_combination(num, params):
@@ -120,7 +138,7 @@ def generate_combination(num, params):
 		else:
 			for iter_list[current_index] in range_list[current_index]:
 				for_recursive(number_of_loops, iter_list=iter_list, range_list=range_list,
-							  current_index=current_index + 1)
+							current_index=current_index + 1)
 
 	for_recursive(num, range_list=params)
 	return result
@@ -134,7 +152,7 @@ def run_simulation(args):
 	# Print start message
 	dev_print("Starting simulation")
 
-	# Set simluation variables
+	# Set simulation variables
 	num_of_players = args.players
 	# Go through set amount of simulations
 	# Start a new game, run it and save the results
@@ -145,57 +163,79 @@ def run_simulation(args):
 	t_strategy = args.trading_strategy
 	# for k in range(num_of_players):
 	# 	dev_print(np.arange(args.buying_range[k * 3], args.buying_range[k * 3 + 1], args.buying_range[k * 3 + 2]))
+	# single_player_param_list = []
+	# for params in player_params:
+	#
+	# 	single_player_param_list.append(generate_combination(num=7, params=params))
+	# # dev_print(single_player_param_list)
+	# single_player_list = []
+	player_combination = None
+	if args.mode in [0, 1, 3]:
+		b_range = [
+			[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(int(args.buying_range[k * 3 + 2]))] for k
+			in
+			range(num_of_players)]
+		u_range = [[args.upgrading_range[k * 3] + args.upgrading_range[k * 3 + 1] * i for i in
+					range(int(args.upgrading_range[k * 3 + 2]))] for k in range(num_of_players)]
+		t_range = [[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(int(args.trading_range[k * 3 + 2]))]
+				   for k in
+				   range(num_of_players)]
+		income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(args.income[k * 3 + 2])] for k in range(num_of_players)]
+		tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(int(args.tax[k * 3 + 2]))] for k in range(num_of_players)]
+		b_tax = [[args.building_tax[k * 3] + args.building_tax[k * 3 + 1] * i for i in range(int(args.building_tax[k * 3 + 2]))] for k in
+				 range(num_of_players)]
+		start_capital = [
+			[args.start_capital[k * 3] + args.start_capital[k * 3 + 1] * i for i in range(args.start_capital[k * 3 + 2])]
+			for k in
+			range(num_of_players)]
 
-	b_range = [
-		[args.buying_range[k * 3] + args.buying_range[k * 3 + 1] * i for i in range(int(args.buying_range[k * 3 + 2]))] for k
-		in
-		range(num_of_players)]
-	u_range = [[args.upgrading_range[k * 3] + args.upgrading_range[k * 3 + 1] * i for i in
-				range(int(args.upgrading_range[k * 3 + 2]))] for k in range(num_of_players)]
-	t_range = [[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(int(args.trading_range[k * 3 + 2]))]
-		for k in
-		range(num_of_players)]
-	income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(args.income[k * 3 + 2])] for k in range(num_of_players)]
-	tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(int(args.tax[k * 3 + 2]))] for k in range(num_of_players)]
-	start_capital = [
-		[args.start_capital[k * 3] + args.start_capital[k * 3 + 1] * i for i in range(args.start_capital[k * 3 + 2])]
-		for k in
-		range(num_of_players)]
-
-	player_params = [[b_range[k], u_range[k], t_range[k], income[k], tax[k], start_capital[k]] for k in
-					 range(num_of_players)]
-	# dev_print(player_params)
-	single_player_param_list = []
-	for params in player_params:
-		single_player_param_list.append(generate_combination(num=6, params=params))
-	# dev_print(single_player_param_list)
-	single_player_list = []
-	if args.mode == 2:
-		for num in range(num_of_players):
-			tmp = []
-			for p in single_player_param_list[num]:
-				tmp.append(Player(num=num, buying_strategy=b_strategy[num], upgrading_strategy=u_strategy[num],
-								  trading_strategy=t_strategy[num],
-								  buying_para=p[0], upgrading_para=p[1], trading_para=p[2], income=p[3], tax=p[4],
-								  start_capital=p[5]))
-			single_player_list.append(tmp)
-
-		player_combination = generate_combination(num=num_of_players, params=single_player_list)
-	else:
-		n = int(args.tax[2])
-		player_combination = []
-		for i in range(n):
-			tmp = []
+		player_params = [[b_range[k], u_range[k], t_range[k], income[k], tax[k], start_capital[k], b_tax[k]] for k in
+						 range(num_of_players)]
+		dev_print(player_params)
+		if args.mode == 3:
+			single_player_param_list = []
+			for params in player_params:
+				single_player_param_list.append(generate_combination(num=7, params=params))
+			# dev_print(single_player_param_list)
+			single_player_list = []
 			for num in range(num_of_players):
-				tmp_player = Player(num=num, buying_strategy=b_strategy[num], upgrading_strategy=u_strategy[num],
-									trading_strategy=b_strategy[num],
-									buying_para=b_range[num][i], upgrading_para=u_range[num][i],
-									trading_para=t_range[num][i],
-									income=income[num][i], tax=tax[num][i], start_capital=start_capital[num][i])
-				# print(tmp_player.income)
-				tmp.append(tmp_player)
+				tmp = []
+				for p in single_player_param_list[num]:
+					tmp.append(Player(num=num, buying_strategy=b_strategy[num], upgrading_strategy=u_strategy[num],
+									trading_strategy=t_strategy[num],
+									buying_para=p[0], upgrading_para=p[1], trading_para=p[2], income=p[3], tax=p[4],
+									start_capital=p[5], building_tax=p[6]))
+				single_player_list.append(tmp)
+
+			player_combination = generate_combination(num=num_of_players, params=single_player_list)
+		elif args.mode == 0 or args.mode == 1:
+			n = int(args.tax[2])
+			player_combination = []
+			for i in range(n):
+				tmp = []
+				for num in range(num_of_players):
+					tmp_player = Player(num=num, buying_strategy=b_strategy[num], upgrading_strategy=u_strategy[num],
+										trading_strategy=b_strategy[num],
+										buying_para=b_range[num][i], upgrading_para=u_range[num][i],
+										trading_para=t_range[num][i],
+										income=income[num][i], tax=tax[num][i], start_capital=start_capital[num][i], building_tax=b_tax[num][i])
+
+					tmp.append(tmp_player)
+				player_combination.append(tmp)
+	elif args.mode == 2:
+		player_combination = []
+		para_list = [args.buying_range, args.upgrading_range, args.trading_range, args.income, args.tax, args.start_capital, args.building_tax]
+		para_combination = generate_combination(7, para_list)
+		for p in para_combination:
+			tmp = []
+			for i in range(num_of_players):
+				tmp.append(Player(num=i, buying_strategy=args.buying_strategy[0], upgrading_strategy=args.upgrading_strategy[0],
+												trading_strategy=args.trading_strategy[0], buying_para=p[0], upgrading_para=p[1], trading_para=p[2],
+												income=p[3], tax=p[4], start_capital=p[5], building_tax=p[6]))
 			player_combination.append(tmp)
-	# print(player_combination)
+	else:
+		raise ValueError("Unknown type.")
+
 	count = 1
 	last = time.time()
 	simulation_list = []
@@ -212,7 +252,8 @@ def run_simulation(args):
 				"upgrade_para": players[i].u_para,
 				"income": players[i].income,
 				"tax": players[i].tax,
-				"start_capital": players[i].start_capital}
+				"start_capital": players[i].start_capital,
+				"building_tax": players[i].building_tax}
 			player_info_lst.append(cur_player_dic)
 		cur_simulation_dic["settings"] = player_info_lst
 
@@ -242,13 +283,16 @@ def run_simulation(args):
 		now = time.time()
 		duration = now - last
 		avg_time = duration / args.number
-		avg_round = total_rounds / valid_simulation
+		try:
+			avg_round = total_rounds / valid_simulation
+		except ZeroDivisionError:
+			avg_round = float("inf")
 		last = time.time()
 
 		cur_simulation_dic["results"]["avg_time"] = avg_time
 		cur_simulation_dic["results"]["avg_round"] = avg_round
 		cur_simulation_dic["results"]["total_time"] = duration
-		cur_simulation_dic["results"]["ended_percent"] = valid_simulation / args.number
+		cur_simulation_dic["results"]["end_percent"] = valid_simulation / args.number
 		# speed = i / (now - start)
 		dev_print("ended: ", valid_simulation)
 		dev_print("avg_time: ", avg_time)
@@ -264,21 +308,26 @@ def run_simulation(args):
 
 
 def get_plot(args):
-	if args.__dict__ is not None:
+	if args.__dict__["change_variable"] is not None:
 		para_to_plot = args.__dict__[args.__dict__["change_variable"]]
 		simulations = metadata_dic["simulations"]
 		x = [para_to_plot[0] + para_to_plot[1] * i for i in range(int(para_to_plot[2]))]
 		y_round = []
 		y_time = []
+		y_end_percent = []
 		for simulation in simulations:
 			y_time.append(simulation["results"]["avg_time"])
 			y_round.append(simulation["results"]["avg_round"])
-		plt.subplot(211)
+			y_end_percent.append(simulation["results"]["end_percent"])
+		plt.subplot(311)
 		plt.plot(x, y_time)
 		plt.ylabel("avg_time")
-		plt.subplot(212)
+		plt.subplot(312)
 		plt.plot(x, y_round)
 		plt.ylabel("avg_round")
+		plt.subplot(313)
+		plt.plot(x, y_end_percent)
+		plt.ylabel("end_percent")
 		plt.show()
 # Same the results to a csv
 # r.writeHTML(args.number, args.players, args.rounds)
@@ -300,6 +349,8 @@ if __name__ == "__main__":
 	parser.add_argument("-tax", "--tax", type=float, nargs="+", default=[0, 0, 1],
 						help="the tax charged when a player passes go, can be a percentage or a actual number, "
 							 "[start, step, number]")
+	parser.add_argument("-b_tax", "--building_tax", type=float, nargs="+", default=[0, 0, 1],
+						help="the tax charged on land property, can only be a percentage, [start, step, number]")
 
 	parser.add_argument("-sc", "--start_capital", type=int, nargs="+", default=[200, 0, 1],
 						help="the money each player has at the beginning of the game, [start, step, number].")
@@ -322,8 +373,8 @@ if __name__ == "__main__":
 	parser.add_argument("-v", "--verbose", const=True, action="store_const",
 						help="if turned on, generate a full log")
 
-	parser.add_argument("-mode", "--mode", type=int, default=0, choices=[0, 1, 2],
-						help="mode 0: only variable is changing\nmode 1: linear compare\nmode 2: cross compare.")
+	parser.add_argument("-mode", "--mode", type=int, default=0, choices=[0, 1, 2, 3],
+						help="mode 0: only one variable is changing\nmode 1: linear compare\nmode 2: cross compare uniform players.\nmode 3: cross compare different players")
 
 	parser.add_argument("-plot", "--change_variable", default=None)
 	args = parser.parse_args()
@@ -334,4 +385,5 @@ if __name__ == "__main__":
 		run_simulation(args)
 	else:
 		raise ValueError("parameter input not valid, please use -h option for help.")
-	get_plot(args)
+	if not is_prod:
+		get_plot(args)

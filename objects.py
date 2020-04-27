@@ -36,7 +36,7 @@ class Building:
 
 class Player:
 
-	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy, buying_para, upgrading_para, trading_para, tax=0, income=100, start_capital=200):
+	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy, buying_para, upgrading_para, trading_para, tax=0, income=100, start_capital=200, building_tax=0):
 		self.start_capital = start_capital
 		self.num = num  # player id
 		self.position = 0
@@ -47,6 +47,7 @@ class Player:
 		self.cash = self.start_capital
 		self.income = income
 		self.tax = tax
+		self.building_tax = building_tax
 
 		self.building = []
 
@@ -66,12 +67,15 @@ class Player:
 		self.building_to_sell_list = []
 
 	def pay_tax(self):
-		money_to_pay = self.tax * self.cash if 0 < self.tax < 1 else self.tax
+		# print("pay tax", self.tax, self.building_tax)
+		cash_tax = self.tax * self.cash if 0 < self.tax < 1 else self.tax
+		building_tax = self.building_tax * self.land_value()
+		money_to_pay = cash_tax + building_tax
 		self.fine_money(money_to_pay)
 		return money_to_pay
 
 	def reset(self):
-		self.__init__(self.num, self.b_strategy, self.u_strategy, self.t_strategy, self.b_para, self.u_para, self.t_para, self.tax, self.income, self.start_capital)
+		self.__init__(self.num, self.b_strategy, self.u_strategy, self.t_strategy, self.b_para, self.u_para, self.t_para, self.tax, self.income, self.start_capital, self.building_tax)
 
 	def __str__(self):
 		s = "buy s:{}, buy para:{}, upgrade s:{}, upgrade para:{}, trade s:{}, trade para:{}.".format(self.b_strategy, self.b_para, self.u_strategy, self.u_para, self.t_strategy, self.t_para)
@@ -333,10 +337,13 @@ class Player:
 				log.write("player {0} pay {1} tax, currently has {2} cash.\n".format(self.num, fined, self.cash))
 
 	def total_property(self):
+		return self.land_value() + self.cash
+
+	def land_value(self):
 		land_value = 0
 		for i in self.building:
 			land_value += i.cur_price
-		return land_value + self.cash
+		return land_value
 
 	def is_bankrupt(self):
 		return self.cash < 0 or self.bankrupt_status
