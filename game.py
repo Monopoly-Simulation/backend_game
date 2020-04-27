@@ -108,7 +108,7 @@ class Game:
 						other_player.building.append(building_to_sell)
 						player.cash += int(building_to_sell.cur_price * 0.1)
 						if util.verbose:
-							log.write("player {0} successfully sell land {1} to player {2}, get the remaining {3}, player {0} currently has {4}, player {1} has {5}.".format(player.num, building_to_sell.name, other_player.num, building_to_sell.cur_price * 0.1, player.cash, other_player.cash))
+							log.write("player {0} successfully sell land {1} to player {2}, get the remaining {3}, player {0} currently has {4}, player {2} has {5}.\n".format(player.num, building_to_sell.name, other_player.num, building_to_sell.cur_price * 0.1, player.cash, other_player.cash))
 						break
 		player.building_to_sell_list = []
 
