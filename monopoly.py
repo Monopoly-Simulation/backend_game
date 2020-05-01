@@ -180,18 +180,18 @@ def run_simulation(args):
 		t_range = [[args.trading_range[k * 3] + args.trading_range[k * 3 + 1] * i for i in range(int(args.trading_range[k * 3 + 2]))]
 				   for k in
 				   range(num_of_players)]
-		income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(args.income[k * 3 + 2])] for k in range(num_of_players)]
+		income = [[args.income[k * 3] + args.income[k * 3 + 1] * i for i in range(int(args.income[k * 3 + 2]))] for k in range(num_of_players)]
 		tax = [[args.tax[k * 3] + args.tax[k * 3 + 1] * i for i in range(int(args.tax[k * 3 + 2]))] for k in range(num_of_players)]
 		b_tax = [[args.building_tax[k * 3] + args.building_tax[k * 3 + 1] * i for i in range(int(args.building_tax[k * 3 + 2]))] for k in
 				 range(num_of_players)]
 		start_capital = [
-			[args.start_capital[k * 3] + args.start_capital[k * 3 + 1] * i for i in range(args.start_capital[k * 3 + 2])]
+			[args.start_capital[k * 3] + args.start_capital[k * 3 + 1] * i for i in range(int(args.start_capital[k * 3 + 2]))]
 			for k in
 			range(num_of_players)]
 
 		player_params = [[b_range[k], u_range[k], t_range[k], income[k], tax[k], start_capital[k], b_tax[k]] for k in
 						 range(num_of_players)]
-		dev_print(player_params)
+		# dev_print(player_params)
 		if args.mode == 3:
 			single_player_param_list = []
 			for params in player_params:
