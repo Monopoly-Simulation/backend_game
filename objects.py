@@ -36,7 +36,7 @@ class Building:
 
 class Player:
 
-	def __init__(self, num, buying_strategy, upgrading_strategy, trading_strategy, buying_para, upgrading_para, trading_para, tax=0, income=100, start_capital=200, building_tax=0):
+	def __init__(self, num, strategy, strategy_para, tax=0, income=100, start_capital=200, building_tax=0):
 		self.start_capital = start_capital
 		self.num = num  # player id
 		self.position = 0
@@ -57,12 +57,8 @@ class Player:
 
 		self.bankrupt_status = False
 
-		self.b_strategy = buying_strategy
-		self.u_strategy = upgrading_strategy
-		self.t_strategy = trading_strategy
-		self.b_para = buying_para
-		self.u_para = upgrading_para
-		self.t_para = trading_para
+		self.strategy = strategy
+		self.strategy_para = strategy_para
 
 		self.building_to_sell_list = []
 
@@ -75,15 +71,13 @@ class Player:
 		return money_to_pay
 
 	def reset(self):
-		self.__init__(self.num, self.b_strategy, self.u_strategy, self.t_strategy, self.b_para, self.u_para, self.t_para, self.tax, self.income, self.start_capital, self.building_tax)
+		self.__init__(self.num, self.strategy, self.strategy_para, self.tax, self.income, self.start_capital, self.building_tax)
 
 	def __str__(self):
-		s = "buy s:{}, buy para:{}, upgrade s:{}, upgrade para:{}, trade s:{}, trade para:{}.".format(self.b_strategy, self.b_para, self.u_strategy, self.u_para, self.t_strategy, self.t_para)
-		return s
+		pass
 
 	def __repr__(self):
-		s = "buy s:{}, buy para:{}, upgrade s:{}, upgrade para:{}, trade s:{}, trade para:{}.".format(self.b_strategy, self.b_para, self.u_strategy, self.u_para, self.t_strategy, self.t_para)
-		return s
+		pass
 
 	def choose_boundary(self, strategy, para):
 		if strategy == 0:
@@ -121,7 +115,7 @@ class Player:
 
 		if building.owner is None:  # the player can buy the building
 			# based on the player's strategy, decide how much cash could be used to buy buildings
-			boundary = self.choose_boundary(self.b_strategy, self.b_para)
+			boundary = self.choose_boundary(self.strategy, self.strategy_para)
 			if self.cash - building.base_price >= boundary:
 				self.cash -= building.base_price
 				self.building.append(building)
@@ -133,7 +127,7 @@ class Player:
 				return False
 		else:
 			if building.owner.num == self.num:  # the player is the owner of the building
-				boundary = self.choose_boundary(self.u_strategy, self.u_para)
+				boundary = self.choose_boundary(self.strategy, self.strategy_para)
 				if self.cash - building.base_price >= boundary:
 					if building.level == 0:
 						self.cash -= building.base_price
@@ -160,7 +154,7 @@ class Player:
 		return True
 
 	def fine_money(self, fined, other=None):
-		boundary = self.choose_boundary(self.t_strategy, self.t_para)
+		boundary = self.choose_boundary(self.strategy, self.strategy_para)
 		if self.cash - fined < boundary:
 			building_to_sell = self.find_min_house_to_sell(fined)
 			# dev_print(self.building)
