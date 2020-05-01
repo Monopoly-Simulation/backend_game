@@ -101,7 +101,7 @@ class Game:
 		for building_to_sell in player.building_to_sell_list:
 			for other_player in self.players:
 				if not other_player.is_bankrupt():
-					boundary = other_player.choose_boundary(other_player.t_strategy, other_player.t_para)
+					boundary = other_player.choose_boundary(other_player.strategy, other_player.strategy_para)
 					if other_player != player and other_player.cash - building_to_sell.cur_price >= boundary:
 						other_player.cash -= building_to_sell.cur_price
 						building_to_sell.set_owner(other_player)
