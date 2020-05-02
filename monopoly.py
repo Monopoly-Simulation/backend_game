@@ -252,7 +252,7 @@ def run_simulation_single_process(player_combinations):
 	simulation_list = []
 
 	start = time.time()
-	for idx, players in player_combinations:
+	for idx, players in enumerate(player_combinations):
 		cur_simulation_dic = single_simulation(players, idx)
 		dev_print("{} out of {} combination finished.".format(count, len(player_combinations)))
 		count += 1
