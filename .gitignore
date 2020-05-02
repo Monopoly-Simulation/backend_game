@@ -1,6 +1,11 @@
 # python binary code
 *.pyc
 
+# test files
+test_multiprocess.py
+test2.py
+test_parser.py
+
 # output files
 logs.txt
 metadata.txt

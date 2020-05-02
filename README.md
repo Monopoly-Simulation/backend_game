@@ -37,6 +37,8 @@ optional arguments:
                         the money for each player when the game starts
   -income input, --income
                         the money each player can get when passing [go]
+  -n_process N, --number_of_process
+                        number of process used to run this program
   -v, --verbose
                         a flag, if turned on the program can generate a log.txt file that record import events in the simulation.
 
