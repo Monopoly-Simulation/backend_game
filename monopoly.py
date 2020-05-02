@@ -10,8 +10,10 @@ import argparse
 import numpy as np
 import json
 import matplotlib.pyplot as plt
+import multiprocessing as mp
 
-random.seed(0)
+
+# random.seed(0)
 metadata_dic = {}
 
 
@@ -106,7 +108,7 @@ def generate_combination(num, params):
 	return result
 
 
-def run_simulation(args):
+def generate_player_combination(args):
 	# Init results class for saving the results
 	# r = Results()
 	if args.verbose:
@@ -183,72 +185,112 @@ def run_simulation(args):
 			player_combination.append(tmp)
 	else:
 		raise ValueError("Unknown type.")
+	return player_combination
 
-	count = 1
+
+def single_simulation(players, num):
 	last = time.time()
-	simulation_list = []
-	for players in player_combination:
-		cur_simulation_dic = {"settings": {}, "details": {}, "results": {}}
-		player_info_lst = []
-		for i in range(len(players)):
-			cur_player_dic = {
-				"strategy": players[i].strategy,
-				"strategy_para": players[i].strategy_para,
-				"income": players[i].income,
-				"tax": players[i].tax,
-				"start_capital": players[i].start_capital,
-				"building_tax": players[i].building_tax}
-			player_info_lst.append(cur_player_dic)
-		cur_simulation_dic["settings"] = player_info_lst
+	cur_simulation_dic = {"settings": {}, "details": {}, "results": {}}
+	player_info_lst = []
+	for i in range(len(players)):
+		cur_player_dic = {
+			"strategy": players[i].strategy,
+			"strategy_para": players[i].strategy_para,
+			"income": players[i].income,
+			"tax": players[i].tax,
+			"start_capital": players[i].start_capital,
+			"building_tax": players[i].building_tax}
+		player_info_lst.append(cur_player_dic)
+	cur_simulation_dic["settings"] = player_info_lst
 
-		total_rounds = 0
-		valid_simulation = 0
+	total_rounds = 0
+	valid_simulation = 0
+	if util.verbose:
+		log.write("player combination: " + str(players) + "\n")
+	for i in range(1, args.number + 1):
 		if util.verbose:
-			log.write("player combination: " + str(players) + "\n")
-		for i in range(1, args.number + 1):
-			if util.verbose:
-				log.write("simulation number" + str(i) + "\n")
-			for n in players:
-				n.reset()
-			g = Game(players, rounds=args.rounds)
-			tmp_info_dic = g.run()
+			log.write("simulation number" + str(i) + "\n")
+		for n in players:
+			n.reset()
+		g = Game(players, rounds=args.rounds)
+		tmp_info_dic = g.run()
 
-			if tmp_info_dic["end"] != -1:
-				total_rounds += tmp_info_dic["end"]
-				valid_simulation += 1
+		if tmp_info_dic["end"] != -1:
+			total_rounds += tmp_info_dic["end"]
+			valid_simulation += 1
 
-			cur_simulation_dic["details"][i] = tmp_info_dic
-			if i % 100 == 0:
-				dev_print("{} out of {} simulation of combination {} finished.".format(i, args.number, count))
+		cur_simulation_dic["details"][i] = tmp_info_dic
+		if i % 100 == 0:
+			dev_print("{} out of {} simulation of current combination finished.".format(i, args.number))
 
-		# r.addHitResults(g.board.hits)
+	# r.addHitResults(g.board.hits)
 
-		# Calculate the amount of simulations per second
-		now = time.time()
-		duration = now - last
-		avg_time = duration / args.number
-		try:
-			avg_round = total_rounds / valid_simulation
-		except ZeroDivisionError:
-			avg_round = float("inf")
-		last = time.time()
+	# Calculate the amount of simulations per second
+	now = time.time()
+	duration = now - last
+	avg_time = duration / args.number
+	try:
+		avg_round = total_rounds / valid_simulation
+	except ZeroDivisionError:
+		avg_round = float("inf")
 
-		cur_simulation_dic["results"]["avg_time"] = avg_time
-		cur_simulation_dic["results"]["avg_round"] = avg_round
-		cur_simulation_dic["results"]["total_time"] = duration
-		cur_simulation_dic["results"]["end_percent"] = valid_simulation / args.number
-		# speed = i / (now - start)
-		dev_print("ended: ", valid_simulation)
-		dev_print("avg_time: ", avg_time)
-		dev_print("avg_round: ", avg_round)
-		# Display the progress every 1/1000 of the way to begin finished
-		dev_print("{} out of {} combination finished.".format(count, len(player_combination)))
+	cur_simulation_dic["results"]["num"] = num
+	cur_simulation_dic["results"]["avg_time"] = avg_time
+	cur_simulation_dic["results"]["avg_round"] = avg_round
+	cur_simulation_dic["results"]["total_time"] = duration
+	cur_simulation_dic["results"]["end_percent"] = valid_simulation / args.number
+	# speed = i / (now - start)
+	dev_print("ended: ", valid_simulation)
+	dev_print("avg_time: ", avg_time)
+	dev_print("avg_round: ", avg_round)
+	return cur_simulation_dic
+
+
+def run_simulation_single_process(player_combinations):
+	count = 1
+
+	simulation_list = []
+
+	start = time.time()
+	for idx, players in player_combinations:
+		cur_simulation_dic = single_simulation(players, idx)
+		dev_print("{} out of {} combination finished.".format(count, len(player_combinations)))
 		count += 1
 		simulation_list.append(cur_simulation_dic)
+	end = time.time()
 	metadata_dic["simulations"] = simulation_list
+	metadata_dic["simulations_time"] = end - start
 	prod_print(json.dumps(metadata_dic) + "\n")
 	# Print that the simulation is finished
 	dev_print("\nDone!")
+	dev_print("\ntotal_time:", metadata_dic["simulations_time"])
+
+
+def run_simulation_multiprocess(player_combinations, number_of_process):
+
+	simulation_list = []
+
+	def log_result(result):
+		dev_print("combination {} finished, {} in total.".format(result["results"]["num"], len(player_combinations)))
+		simulation_list.append(result)
+
+	start = time.time()
+	pool = mp.Pool(number_of_process)
+
+	for idx, players in enumerate(player_combinations):
+		pool.apply_async(single_simulation, args=(players, idx + 1), callback=log_result)
+		# cur_simulation_dic = single_simulation(players)
+		# dev_print("{} out of {} combination finished.".format(count, len(player_combinations)))
+		# simulation_list.append(cur_simulation_dic)
+	pool.close()
+	pool.join()
+	end = time.time()
+	metadata_dic["simulations"] = simulation_list
+	metadata_dic["simulations_time"] = end - start
+	prod_print(json.dumps(metadata_dic) + "\n")
+	# Print that the simulation is finished
+	dev_print("\nDone!")
+	dev_print("\ntotal_time:", metadata_dic["simulations_time"])
 
 
 def get_plot(args):
@@ -262,20 +304,33 @@ def get_plot(args):
 		y_round = []
 		y_time = []
 		y_end_percent = []
+		y_total_time = []
 		for simulation in simulations:
 			y_time.append(simulation["results"]["avg_time"])
 			y_round.append(simulation["results"]["avg_round"])
 			y_end_percent.append(simulation["results"]["end_percent"])
-		plt.subplot(311)
+			y_total_time.append(simulation["results"]["total_time"])
+		plt.subplot(411)
 		plt.plot(x, y_time)
 		plt.ylabel("avg_time")
-		plt.subplot(312)
+		plt.subplot(412)
 		plt.plot(x, y_round)
 		plt.ylabel("avg_round")
-		plt.subplot(313)
+		plt.subplot(413)
 		plt.plot(x, y_end_percent)
 		plt.ylabel("end_percent")
+		plt.subplot(414)
+		plt.plot(x, y_total_time)
+		plt.ylabel("total_time")
 		plt.show()
+
+
+def main(args):
+	player_combinations = generate_player_combination(args)
+	if args.number_of_process == 1:
+		run_simulation_single_process(player_combinations)
+	else:
+		run_simulation_multiprocess(player_combinations, args.number_of_process)
 # Same the results to a csv
 # r.writeHTML(args.number, args.players, args.rounds)
 
@@ -314,13 +369,15 @@ if __name__ == "__main__":
 	parser.add_argument("-mode", "--mode", type=int, default=0, choices=[0, 1, 2, 3],
 						help="mode 1: linear compare\nmode 2: cross compare uniform players.\nmode 3: cross compare different players")
 
+	parser.add_argument("-n_process", "--number_of_process", type=int, default=1,
+						help="number of process used to run this program.")
 	parser.add_argument("-plot", "--change_variable", default=None)
 	args = parser.parse_args()
 
 	valid, args = check_validity_and_broadcast(args)
 	if valid:
 		# Run simulation
-		run_simulation(args)
+		main(args)
 	else:
 		raise ValueError("parameter input not valid, please use -h option for help.")
 	if not is_prod:
